@@ -89,8 +89,13 @@ class Settings(BaseSettings):
 
     # --- Seeding ---
     SEED_REFERENCE_DATA: bool = True   # departments, agencies, categories, routing rules, SLA, games
-    SEED_DEMO_DATA: bool = True        # fictional demo users/complaints/vehicles (labelled "Demo data")
+    SEED_DEMO_DATA: bool = False       # fictional demo users/complaints/vehicles. OFF by default (a public demo password is a risk);
+                                       # set true only for local demos (backend/.env.example does)
     DEMO_PASSWORD: str = "Demo@12345"  # password of seeded DEMO accounts only
+    # First real admin. Created at startup ONLY if no active non-demo admin exists yet. Set both in the host dashboard.
+    BOOTSTRAP_ADMIN_EMAIL: str = ""
+    BOOTSTRAP_ADMIN_PASSWORD: str = ""      # at least 10 characters
+    BOOTSTRAP_ADMIN_NAME: str = "Administrator"
 
     @field_validator("DATABASE_URL")
     @classmethod

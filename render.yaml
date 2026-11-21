@@ -55,6 +55,11 @@ services:
         value: https://acharyap2p.vercel.app
       # Fictional demo users/complaints + simulated CleanRoute data. Set to 'false' for anything that is not a demo.
       - key: SEED_DEMO_DATA
-        value: "true"
+        value: "false"
+      # First real admin (created once at startup if no non-demo admin exists). Set both in the Render dashboard.
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        sync: false
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
       - key: GARBAGE_SIMULATION_AUTOSTART
         value: "true"

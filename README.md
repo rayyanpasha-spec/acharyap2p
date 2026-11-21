@@ -335,3 +335,20 @@ Frontend (Vercel): `https://acharyap2p.vercel.app` - Backend (Render): `https://
   `http://localhost:5173` for local development). The backend port is never an origin. The redirect URI field is unused.
 * Render free instances sleep when idle, so the first request after a pause can take about a minute.
 
+### Turning demo data off (public sites)
+
+Demo data is **off by default** (`SEED_DEMO_DATA=false`). A site that was started with demo data on still contains the demo
+accounts (password `Demo@12345`, including an admin), so after switching it off:
+
+1. In Render set `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD` (at least 10 characters) and `SEED_DEMO_DATA=false`,
+   then redeploy. At startup the app creates your admin **only if no active non-demo admin exists**.
+2. Sign in as that admin, open **Staff > Admin > Configuration > System > Demo data > Remove demo data**, and type
+   `DELETE DEMO DATA`. This deletes the fictional complaints and simulated CleanRoute data and **deactivates** all demo
+   accounts. Real data is untouched. It is refused for a demo admin, so you cannot lock yourself out.
+   (API: `POST /api/v1/admin/demo-data/purge` with `{"confirm":"DELETE DEMO DATA"}`.)
+3. With demo data off the site starts empty: there are no fictional vehicles, bins or complaints on the City in Motion map until
+   real ones exist. The category / department / routing configuration is kept.
+
+Remove the bootstrap variables afterwards if you like; they are only used while no real admin exists. Locally, keep
+`SEED_DEMO_DATA=true` in `backend/.env` if you want the demo data for development.
+

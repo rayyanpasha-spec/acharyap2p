@@ -17,9 +17,30 @@ from app.database import get_db
 from app.models import (
     AppSetting, AuditLog, Category, Certificate, Complaint, Department, Notification, RoutingRule, SlaPolicy,
 )
-from app.services import audit_service
+from app.services import audit_service, demo_purge_service
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
+
+class PurgeDemoIn(BaseModel):
+    confirm: str = Field(description='Must be exactly "DELETE DEMO DATA"')
+    include_cleanroute: bool = True
+
+
+@router.post("/demo-data/purge")
+def purge_demo_data(body: PurgeDemoIn, db: Session = Depends(get_db), admin: CurrentUser = Depends(require_admin)):
+    """Remove fictional demo data (demo users are deactivated). Refused when called by a demo admin, so you cannot lock
+    yourself out: sign in with your OWN admin account first (see BOOTSTRAP_ADMIN_EMAIL / POST /admin/users)."""
+    if body.confirm != "DELETE DEMO DATA":
+        raise HTTPException(422, 'confirm must be exactly "DELETE DEMO DATA"')
+    me = get_user_store().get_by_id(admin.id) or {}
+    if me.get("is_demo"):
+        raise HTTPException(409, "You are signed in with a DEMO admin account. Sign in with your own admin account first, "
+                                 "otherwise purging would lock you out.")
+    counts = demo_purge_service.purge_demo_data(db, include_cleanroute=body.include_cleanroute)
+    audit_service.log(db, admin, "demo.purge", "system", None, after=counts)
+    db.commit()
+    return {"ok": True, "removed": counts}
+
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 AGENCY_KINDS = ("corporation", "bwssb", "bescom")

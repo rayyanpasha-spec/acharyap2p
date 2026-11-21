@@ -294,6 +294,41 @@ function KV({ title, obj }) {
     </section>
   )
 }
+function DemoDataPanel() {
+  const [open, setOpen] = useState(false)
+  const [text, setText] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const run = async () => {
+    setBusy(true); setError('')
+    try {
+      const { data } = await api.post('/admin/demo-data/purge', { confirm: 'DELETE DEMO DATA', include_cleanroute: true })
+      const r = data.removed || {}
+      toast.success(`Demo data removed: ${r.complaints ?? 0} complaints, ${r.demo_users_deactivated ?? 0} demo accounts deactivated.`)
+      setOpen(false); setText('')
+    } catch (e) { setError(errMsg(e)) } finally { setBusy(false) }
+  }
+  return (
+    <section className="rounded-[14px] border border-critical/30 bg-surface">
+      <h3 className="border-b border-critical/20 bg-critical-100 px-4 py-2 font-display text-[13px] font-bold text-critical">Demo data</h3>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <p className="max-w-2xl text-[13px] text-ink">
+          Removes all fictional demo complaints, simulated CleanRoute vehicles/bins/routes and <b>deactivates the demo accounts</b> (the public demo password
+          stops working). Real data is not touched. You must be signed in with your <b>own</b> admin account, not a demo one.
+        </p>
+        <Button variant="danger" size="sm" onClick={() => { setError(''); setOpen(true) }}>Remove demo data...</Button>
+      </div>
+      <Modal open={open} onClose={() => !busy && setOpen(false)} title="Remove all demo data?"
+        footer={<><Button variant="secondary" onClick={() => setOpen(false)} disabled={busy}>Cancel</Button>
+          <Button variant="danger" onClick={run} loading={busy} disabled={text !== 'DELETE DEMO DATA'}>Remove demo data</Button></>}>
+        <p className="text-sm text-ink">This cannot be undone. Type <code className="rounded bg-paper px-1.5 py-0.5 font-semibold">DELETE DEMO DATA</code> to confirm.</p>
+        <Input className="mt-3" value={text} onChange={(e) => setText(e.target.value)} placeholder="DELETE DEMO DATA" aria-label="Confirmation text" />
+        {error && <p role="alert" className="mt-2 text-sm font-medium text-critical">{error}</p>}
+      </Modal>
+    </section>
+  )
+}
+
 function System() {
   const s = useApi('/admin/system')
   const d = s.data || {}
@@ -303,6 +338,7 @@ function System() {
       <div className="grid gap-3 md:grid-cols-2">
         <KV title="Backend" obj={{ sql_backend: d.sql_backend, user_store: d.user_store, demo_mode: d.demo_mode }} />
         <KV title="Record counts" obj={d.counts} />
+        <div className="md:col-span-2"><DemoDataPanel /></div>
         <div className="md:col-span-2"><KV title="AI providers" obj={d.ai && !Array.isArray(d.ai) ? d.ai : Array.isArray(d.ai) ? Object.fromEntries(d.ai.map((p, i) => [p.name || i, p])) : d.ai?.providers} /></div>
       </div>
     </Load>
