@@ -1,0 +1,67 @@
+# OPTIONAL local stack: PostgreSQL + MongoDB + the API. Not required for development (SQLite works without Docker).
+#
+#   cd infra
+#   docker compose up --build
+#   -> API on http://localhost:8000  (docs: /docs, health: /health)
+#
+# Point the frontend at it: VITE_API_BASE_URL=http://localhost:8000/api/v1  VITE_WS_BASE_URL=ws://localhost:8000
+# These credentials are for LOCAL use only - never reuse them anywhere else.
+# This file was written but not executed by its author; see "Known limitations" in the root README.
+name: civiclens
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: civiclens
+      POSTGRES_PASSWORD: civiclens_local_only
+      POSTGRES_DB: civiclens
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U civiclens -d civiclens"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongodata:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  backend:
+    build:
+      context: ../backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: development
+      DATABASE_URL: postgresql://civiclens:civiclens_local_only@postgres:5432/civiclens
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB_NAME: civiclens
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-local-compose-only-change-me-please-use-a-long-random-secret}
+      FRONTEND_ORIGIN: http://localhost:5173
+      PUBLIC_BASE_URL: http://localhost:5173
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      AI_PROVIDER_ORDER: ${AI_PROVIDER_ORDER:-openai,rules}
+      SEED_DEMO_DATA: "true"
+      GARBAGE_SIMULATION_AUTOSTART: "true"
+    volumes:
+      - uploads:/app/uploads
+      - certificates:/app/generated_certificates
+
+volumes:
+  pgdata:
+  mongodata:
+  uploads:
+  certificates:

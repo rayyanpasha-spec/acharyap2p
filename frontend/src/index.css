@@ -1,0 +1,80 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+/* CivicLens — Civic Minimalism design tokens.
+   Base palette from the README (paper / forest / charcoal) plus supporting hues so the product is not one colour:
+   civic blue (officer + information), teal (supervisor / water), plum (admin), terracotta (high urgency).
+   NO gradients anywhere. Red and amber are reserved for operational meaning (severity). */
+@theme {
+  --color-paper: #f7f7f2;
+  --color-surface: #ffffff;
+  --color-ink: #303630;
+  --color-muted: #737a72;
+  --color-line: #e8e9e2;
+  --color-line-strong: #d4d6cc;
+
+  --color-forest: #244c39;
+  --color-forest-600: #2d5e47;
+  --color-forest-100: #e3ede6;
+  --color-forest-50: #f0f6f2;
+
+  --color-civic: #2f5f8f;
+  --color-civic-100: #e2ebf4;
+  --color-civic-50: #f1f5fa;
+
+  --color-teal: #2a7f86;
+  --color-teal-100: #dff0f1;
+
+  --color-plum: #6b4c7a;
+  --color-plum-100: #efe8f3;
+
+  --color-saffron: #c1782e;
+  --color-saffron-100: #f8ecdc;
+
+  --color-success: #397a56;
+  --color-success-100: #e1f0e7;
+  --color-warning: #c18b36;
+  --color-warning-100: #f8efd9;
+  --color-high: #c2603a;
+  --color-high-100: #f7e5dc;
+  --color-critical: #b94a48;
+  --color-critical-100: #f6e0df;
+  --color-low: #4f7a8f;
+  --color-low-100: #e3edf2;
+
+  /* category chips */
+  --color-cat-roads: #8a6d3b;
+  --color-cat-waste: #4f7a3a;
+  --color-cat-water: #2f6fa3;
+  --color-cat-electricity: #a87b00;
+  --color-cat-trees: #2f7d4f;
+  --color-cat-drainage: #2a7f86;
+  --color-cat-public_infrastructure: #6b4c7a;
+  --color-cat-other: #737a72;
+
+  --font-sans: "Inter", "Noto Sans Kannada", "Noto Sans Devanagari", "Noto Sans Tamil", "Noto Sans Telugu", "Noto Sans Malayalam", system-ui, sans-serif;
+  --font-display: "Manrope", "Noto Sans Kannada", "Noto Sans Devanagari", "Noto Sans Tamil", "Noto Sans Telugu", "Noto Sans Malayalam", system-ui, sans-serif;
+  --radius-panel: 10px;
+}
+
+html, body, #root { height: 100%; }
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.01em; }
+
+/* visible keyboard focus everywhere */
+:focus-visible { outline: 2px solid var(--color-civic); outline-offset: 2px; border-radius: 6px; }
+
+/* Leaflet containers must have a height set by the page; make controls readable */
+.leaflet-container { font-family: var(--font-sans); border-radius: var(--radius-panel); }
+
+@keyframes cl-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+.cl-pulse { animation: cl-pulse 1.2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}

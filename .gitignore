@@ -1,0 +1,29 @@
+# Secrets / local config (never commit)
+.env
+.env.*
+!.env.example
+
+# Databases and runtime files
+*.db
+*.db-wal
+*.db-shm
+uploads/
+generated_certificates/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Node / frontend build
+node_modules/
+dist/
+
+# Logs and editor/OS files
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,56 @@
+# Render Blueprint for the CivicLens API (FastAPI) + a free PostgreSQL database.
+# The React frontend is deployed separately on Vercel (see docs/DEPLOYMENT.md).
+#
+# Values marked `sync: false` are NOT stored in this file: Render asks for them when the Blueprint is first
+# applied (or you set them later in the dashboard). Never commit real secrets here.
+databases:
+  - name: civiclens-db
+    plan: free
+    databaseName: civiclens
+    user: civiclens
+
+services:
+  - type: web
+    name: civiclens-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.5
+      - key: APP_ENV
+        value: production
+      # SQL database (Render PostgreSQL). app/config.py rewrites postgres:// / postgresql:// to postgresql+psycopg2://
+      - key: DATABASE_URL
+        fromDatabase:
+          name: civiclens-db
+          property: connectionString
+      # Signing key for login tokens - generated once by Render.
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      # User accounts: MongoDB Atlas connection string. Leave empty to keep users in the SQL `users` table.
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB_NAME
+        value: civiclens
+      # AI: OpenAI primary. Without a key the app falls back to Ollama (not available on Render) and then to rules.
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: AI_PROVIDER_ORDER
+        value: openai,rules
+      # CORS: exact Vercel URL(s), comma separated, no trailing slash. Regex is optional (Vercel preview URLs).
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: FRONTEND_ORIGIN_REGEX
+        sync: false
+      # Frontend URL; used inside certificate QR codes (https://<vercel-app>/verify/<code>).
+      - key: PUBLIC_BASE_URL
+        sync: false
+      # Fictional demo users/complaints + simulated CleanRoute data. Set to 'false' for anything that is not a demo.
+      - key: SEED_DEMO_DATA
+        value: "true"
+      - key: GARBAGE_SIMULATION_AUTOSTART
+        value: "true"
