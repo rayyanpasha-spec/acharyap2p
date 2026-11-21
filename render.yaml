@@ -47,12 +47,12 @@ services:
         sync: false
       # CORS: exact Vercel URL(s), comma separated, no trailing slash. Regex is optional (Vercel preview URLs).
       - key: FRONTEND_ORIGIN
-        sync: false
+        value: https://acharyap2p.vercel.app
       - key: FRONTEND_ORIGIN_REGEX
         sync: false
       # Frontend URL; used inside certificate QR codes (https://<vercel-app>/verify/<code>).
       - key: PUBLIC_BASE_URL
-        sync: false
+        value: https://acharyap2p.vercel.app
       # Fictional demo users/complaints + simulated CleanRoute data. Set to 'false' for anything that is not a demo.
       - key: SEED_DEMO_DATA
         value: "true"

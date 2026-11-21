@@ -4,6 +4,7 @@
 import { useEffect, useRef } from 'react'
 import { emptyFC } from '../utils/geojson'
 import { complaintPillars } from '../utils/solids'
+import useZoomBucket from '../hooks/useZoomBucket'
 import { LYR, SEVERITY, SRC } from '../utils/mapConfig'
 
 const ALL = [LYR.complaintPillars, LYR.cluster, LYR.clusterCount, LYR.complaint, LYR.complaintLabel, LYR.resolved]
@@ -21,7 +22,7 @@ export function addComplaintLayers(map, fonts) {
 
   // 3D pillars: height = severity (critical tallest). Real extruded solids, drawn under the icons.
   map.addLayer({
-    id: LYR.complaintPillars, type: 'fill-extrusion', source: SRC.complaintPillars, minzoom: 13,
+    id: LYR.complaintPillars, type: 'fill-extrusion', source: SRC.complaintPillars, minzoom: 8,
     paint: { 'fill-extrusion-color': ['get', 'color'], 'fill-extrusion-height': ['get', 'h'], 'fill-extrusion-base': 0, 'fill-extrusion-opacity': 0.93, 'fill-extrusion-vertical-gradient': true },
   })
 
@@ -65,6 +66,7 @@ export function addComplaintLayers(map, fonts) {
 
 export default function ComplaintMarkerLayer({ map, fonts, registerPicker, active, resolved, showActive, showResolved, flash, reducedMotion }) {
   const indexRef = useRef(new Map())
+  const zoomBucket = useZoomBucket(map)
 
   // create once
   useEffect(() => {
@@ -80,11 +82,11 @@ export default function ComplaintMarkerLayer({ map, fonts, registerPicker, activ
   // data (cluster source re-clusters on setData; no map rebuild)
   useEffect(() => {
     try { map.getSource(SRC.complaints)?.setData(active || emptyFC()) } catch { /* ignore */ }
-    try { map.getSource(SRC.complaintPillars)?.setData(complaintPillars(active)) } catch { /* ignore */ }
+    try { map.getSource(SRC.complaintPillars)?.setData(complaintPillars(active, zoomBucket)) } catch { /* ignore */ }
     // keep coordinates of features that just left the view (e.g. resolved) so their status flash can still be placed
     const idx = indexRef.current
     for (const f of active?.features || []) idx.set(f.properties.ticket_id, f.geometry.coordinates)
-  }, [map, active])
+  }, [map, active, zoomBucket])
   useEffect(() => {
     try { map.getSource(SRC.resolved)?.setData(resolved || emptyFC()) } catch { /* ignore */ }
     const idx = indexRef.current

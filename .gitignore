@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.production
 
 # Databases and runtime files
 *.db

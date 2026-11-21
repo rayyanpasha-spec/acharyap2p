@@ -2,18 +2,20 @@
 import { useEffect } from 'react'
 import { binsToFC, emptyFC } from '../utils/geojson'
 import { binTowers } from '../utils/solids'
+import useZoomBucket from '../hooks/useZoomBucket'
 import { LYR, SRC } from '../utils/mapConfig'
 
 const IDS = [LYR.binTowers, LYR.bin, LYR.binLabel]
 
 export default function BinLayer({ map, fonts, registerPicker, bins, visible }) {
+  const zoomBucket = useZoomBucket(map)
   useEffect(() => {
     try {
       map.addSource(SRC.bins, { type: 'geojson', data: emptyFC() })
       map.addSource(SRC.binTowers, { type: 'geojson', data: emptyFC() })
       // 3D bin towers: height = fill level, colour = status
       map.addLayer({
-        id: LYR.binTowers, type: 'fill-extrusion', source: SRC.binTowers, minzoom: 13,
+        id: LYR.binTowers, type: 'fill-extrusion', source: SRC.binTowers, minzoom: 8,
         layout: { visibility: 'none' },
         paint: { 'fill-extrusion-color': ['get', 'color'], 'fill-extrusion-height': ['get', 'h'], 'fill-extrusion-base': 0, 'fill-extrusion-opacity': 0.95, 'fill-extrusion-vertical-gradient': true },
       })
@@ -47,8 +49,8 @@ export default function BinLayer({ map, fonts, registerPicker, bins, visible }) 
 
   useEffect(() => {
     try { map.getSource(SRC.bins)?.setData(binsToFC(bins || [])) } catch { /* ignore */ }
-    try { map.getSource(SRC.binTowers)?.setData(binTowers(bins || [])) } catch { /* ignore */ }
-  }, [map, bins])
+    try { map.getSource(SRC.binTowers)?.setData(binTowers(bins || [], zoomBucket)) } catch { /* ignore */ }
+  }, [map, bins, zoomBucket])
   useEffect(() => {
     IDS.forEach((id) => { try { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none') } catch { /* ignore */ } })
   }, [map, visible])

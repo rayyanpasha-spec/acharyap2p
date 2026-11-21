@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "CivicLens"
     API_V1_PREFIX: str = "/api/v1"
     # Comma separated list of allowed browser origins (Vercel URL in production)
-    FRONTEND_ORIGIN: str = "http://localhost:5173,http://localhost:5199"
+    FRONTEND_ORIGIN: str = "http://localhost:5173,http://localhost:5199,https://acharyap2p.vercel.app"
     FRONTEND_ORIGIN_REGEX: str = ""  # e.g. https://.*\.vercel\.app for Vercel preview deployments
 
     # --- Bengaluru pilot defaults (README section 1) ---

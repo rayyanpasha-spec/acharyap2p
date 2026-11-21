@@ -311,3 +311,27 @@ frontend/            React + Vite app (src/), vercel.json
 infra/               optional docker-compose (PostgreSQL + MongoDB + API)
 docs/                specification, API contract, architecture, deployment, boundaries
 ```
+
+## Deployed instance checklist
+
+Frontend (Vercel): `https://acharyap2p.vercel.app` - Backend (Render): `https://acharyap2p.onrender.com`
+
+* **Vercel** needs no dashboard variables: `frontend/.env.production` (public URLs only) is used by `vite build`. Local
+  `npm run dev` keeps using `frontend/.env` (your local backend).
+* **Render environment variables** (dashboard > Environment) - set these, then redeploy:
+
+  | Variable | Value |
+  |---|---|
+  | `FRONTEND_ORIGIN` | `https://acharyap2p.vercel.app` (CORS; also the code default since this commit) |
+  | `PUBLIC_BASE_URL` | `https://acharyap2p.vercel.app` (certificate QR codes) |
+  | `GOOGLE_CLIENT_ID` | your OAuth client id (public). Until it is set, `/api/v1/auth/config` reports `google_enabled:false` |
+  | `OPENAI_API_KEY` | your key (secret - Render dashboard only, never in git) |
+  | `AI_PROVIDER_ORDER` | `openai,rules` (no Ollama on Render) |
+  | `JWT_SECRET_KEY` | a long random string - **do not leave the development default** |
+  | `APP_ENV` | `production` |
+  | `DATABASE_URL` | Render PostgreSQL internal URL. Without it the app uses SQLite on Render's ephemeral disk and **loses all data on every deploy/restart** |
+
+* **Google Cloud Console** > OAuth client > *Authorised JavaScript origins*: add `https://acharyap2p.vercel.app` (and
+  `http://localhost:5173` for local development). The backend port is never an origin. The redirect URI field is unused.
+* Render free instances sleep when idle, so the first request after a pause can take about a minute.
+

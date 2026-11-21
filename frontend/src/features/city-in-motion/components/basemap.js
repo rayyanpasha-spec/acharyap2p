@@ -27,7 +27,7 @@ export function restyleBasemap(map) {
 
   // 3D buildings: retune the style's own extrusion layer (muted warm grey, no vertical gradient), visible from zoom 14.
   if (map.getLayer('building-3d')) {
-    safe(() => map.setPaintProperty('building-3d', 'fill-extrusion-color', '#CDD0C6'))
+    safe(() => map.setPaintProperty('building-3d', 'fill-extrusion-color', BUILDING_COLOR))
     safe(() => map.setPaintProperty('building-3d', 'fill-extrusion-opacity', 0.92))
     safe(() => map.setPaintProperty('building-3d', 'fill-extrusion-vertical-gradient', true))   // engine lighting for depth
     // exaggerated height so the 3D city reads clearly at city zoom
@@ -45,7 +45,7 @@ export function restyleBasemap(map) {
         'source-layer': 'building',
         minzoom: 14,
         paint: {
-          'fill-extrusion-color': '#D8DAD3',
+          'fill-extrusion-color': BUILDING_COLOR,
           'fill-extrusion-height': ['coalesce', ['get', 'render_height'], ['get', 'height'], 8],
           'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
           'fill-extrusion-opacity': 0.88,
@@ -57,6 +57,13 @@ export function restyleBasemap(map) {
   }
   return null
 }
+
+// Height-coloured buildings: sand -> terracotta -> teal -> blue -> plum (low-rise to towers)
+const BUILDING_HEIGHT = ['coalesce', ['get', 'render_height'], ['get', 'height'], 9]
+export const BUILDING_COLOR = [
+  'interpolate', ['linear'], BUILDING_HEIGHT,
+  0, '#EBDDC5', 12, '#E6C9A4', 25, '#DBA98A', 45, '#9CC3C9', 80, '#6EA0C8', 140, '#8A6FB0', 260, '#6B4C7A',
+]
 
 /** Pick glyph font stacks that the loaded style's glyph server actually serves. */
 export function detectFonts(map) {

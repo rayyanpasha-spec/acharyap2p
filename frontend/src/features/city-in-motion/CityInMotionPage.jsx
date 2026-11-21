@@ -66,7 +66,7 @@ export default function CityInMotionPage() {
   const [filters, setFilters] = useState(EMPTY_FILTERS)
   const [tab, setTab] = useState('map') // 'map' | 'list'
   const [railOpen, setRailOpen] = useState(false)
-  const [cam, setCam] = useState({ pitch: flatStart ? 0 : DEFAULT_VIEW.pitch, bearing: DEFAULT_VIEW.bearing })
+  const [cam, setCam] = useState({ pitch: flatStart ? 0 : DEFAULT_VIEW.pitch, bearing: DEFAULT_VIEW.bearing, zoom: DEFAULT_VIEW.zoom })
   const [vehicleMode, setVehicleMode] = useState(null)
   const [fullscreen, setFullscreen] = useState(false)
   const [staleTick, setStaleTick] = useState(0)
@@ -162,7 +162,7 @@ export default function CityInMotionPage() {
     const pt = coordsFor(type, String(id))
     if (pt) requestAnimationFrame(() => mapRef.current?.flyTo(pt, type === 'vehicle' ? 15.5 : 16))
   }
-  const onCamera = useCallback((c2) => setCam({ pitch: c2.pitch, bearing: c2.bearing }), [])
+  const onCamera = useCallback((c2) => setCam({ pitch: c2.pitch, bearing: c2.bearing, zoom: c2.zoom }), [])
   const togglePitch = () => mapRef.current?.setPitch(pitched ? 0 : TILT_PITCH)
   const mapApi = useCallback(() => mapRef.current, [])
 
@@ -313,6 +313,15 @@ export default function CityInMotionPage() {
               <p className="pointer-events-auto w-fit rounded-lg border border-line-strong bg-surface px-3 py-1.5 text-xs text-muted">No civic issues match the current filters.</p>
             )}
           </div>
+
+          {tab === 'map' && cam.zoom < 13 && (
+            <div className="absolute bottom-10 left-1/2 z-20 -translate-x-1/2">
+              <button type="button" onClick={() => mapApi()?.resetCamera?.()}
+                className="flex items-center gap-2 rounded-full border border-forest/30 bg-forest px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-forest-600">
+                <span aria-hidden>3D</span> Zoom in to see 3D buildings: show the 3D city
+              </button>
+            </div>
+          )}
 
           {tab === 'map' && (
             <div className="absolute right-3 top-3 z-20">
