@@ -27,10 +27,13 @@ export function restyleBasemap(map) {
 
   // 3D buildings: retune the style's own extrusion layer (muted warm grey, no vertical gradient), visible from zoom 14.
   if (map.getLayer('building-3d')) {
-    safe(() => map.setPaintProperty('building-3d', 'fill-extrusion-color', '#D8DAD3'))
-    safe(() => map.setPaintProperty('building-3d', 'fill-extrusion-opacity', 0.88))
-    safe(() => map.setPaintProperty('building-3d', 'fill-extrusion-vertical-gradient', false))
-    safe(() => map.setLayerZoomRange('building-3d', 14, 24))
+    safe(() => map.setPaintProperty('building-3d', 'fill-extrusion-color', '#CDD0C6'))
+    safe(() => map.setPaintProperty('building-3d', 'fill-extrusion-opacity', 0.92))
+    safe(() => map.setPaintProperty('building-3d', 'fill-extrusion-vertical-gradient', true))   // engine lighting for depth
+    // exaggerated height so the 3D city reads clearly at city zoom
+    safe(() => map.setPaintProperty('building-3d', 'fill-extrusion-height', ['*', 1.8, ['coalesce', ['get', 'render_height'], ['get', 'height'], 9]]))
+    safe(() => map.setPaintProperty('building-3d', 'fill-extrusion-base', ['*', 1.8, ['coalesce', ['get', 'render_min_height'], 0]]))
+    safe(() => map.setLayerZoomRange('building-3d', 13, 24))
     return 'building-3d'
   }
   if (map.getSource('openmaptiles')) {

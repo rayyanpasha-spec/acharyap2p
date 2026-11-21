@@ -45,9 +45,10 @@ function mergeView(md) {
   const ok = Array.isArray(c) && Number.isFinite(+c[0]) && Number.isFinite(+c[1]) && Math.abs(+c[0]) <= 180 && Math.abs(+c[1]) <= 90
   return {
     center: ok ? [+c[0], +c[1]] : DEFAULT_VIEW.center,
-    zoom: Number.isFinite(+md?.zoom) ? +md.zoom : DEFAULT_VIEW.zoom,
-    pitch: Number.isFinite(+md?.pitch) ? +md.pitch : DEFAULT_VIEW.pitch,
-    bearing: Number.isFinite(+md?.bearing) ? +md.bearing : DEFAULT_VIEW.bearing,
+    // zoom/pitch/bearing are fixed to the close 3D camera: the server's zoom 12 is the report-form default and shows no 3D
+    zoom: DEFAULT_VIEW.zoom,
+    pitch: DEFAULT_VIEW.pitch,
+    bearing: DEFAULT_VIEW.bearing,
   }
 }
 

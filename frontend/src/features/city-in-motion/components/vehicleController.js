@@ -33,6 +33,7 @@ class ThreeScene {
   onAdd(map, gl) {
     const T = this.T
     this.map = map
+    if (import.meta.env.DEV) window.__threeScene = this   // dev-only debug handle
     this.camera = new T.Camera()
     this.scene = new T.Scene()
     this.m = new T.Matrix4()

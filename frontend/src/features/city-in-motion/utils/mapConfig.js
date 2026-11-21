@@ -7,9 +7,9 @@ export const IS_DEFAULT_STYLE = STYLE_URL === DEFAULT_STYLE_URL
 export const ATTRIBUTION_TEXT = 'OpenFreeMap © OpenMapTiles Data from OpenStreetMap'
 
 /** Pilot camera. MapLibre order is [longitude, latitude]. The server may override it via /city-twin/summary.map_default. */
-export const DEFAULT_VIEW = { center: [77.5946, 12.9716], zoom: 12, pitch: 55, bearing: -15 }
+export const DEFAULT_VIEW = { center: [77.5946, 12.9716], zoom: 13.6, pitch: 60, bearing: -20 }
 export const FLAT_PITCH = 0
-export const TILT_PITCH = 55
+export const TILT_PITCH = 60
 
 /**
  * 3D MODEL ORIENTATION CONVENTION (documented once, used everywhere):
@@ -23,9 +23,9 @@ export const GLB_URL = '/models/vehicles/garbage-truck.glb'
 
 /** Trucks are exaggerated on screen so they stay readable at zoom 12-17. */
 export const TRUCK_LENGTH_M = 7.6
-export const VEHICLE_TARGET_PX = 34
+export const VEHICLE_TARGET_PX = 78   // on-screen truck length in px (exaggerated on purpose so the 3D model reads at city zoom)
 export const VEHICLE_SCALE_MIN = 1.6
-export const VEHICLE_SCALE_MAX = 60
+export const VEHICLE_SCALE_MAX = 110
 
 export const POLL_MS = 5000
 export const STALE_AFTER_S = 30
@@ -33,6 +33,8 @@ export const STALE_AFTER_S = 30
 /* ---------- identifiers ---------- */
 export const SRC = {
   complaints: 'ct-complaints',
+  complaintPillars: 'ct-complaint-pillars',
+  binTowers: 'ct-bin-towers',
   resolved: 'ct-resolved',
   bins: 'ct-bins',
   routesDone: 'ct-routes-done',
@@ -44,6 +46,8 @@ export const SRC = {
 }
 export const LYR = {
   cluster: 'ct-cluster',
+  complaintPillars: 'ct-complaint-pillars-3d',
+  binTowers: 'ct-bin-towers-3d',
   clusterCount: 'ct-cluster-count',
   complaint: 'ct-complaint',
   complaintLabel: 'ct-complaint-label',
@@ -109,8 +113,8 @@ export const EMPTY_FILTERS = { severity: '', category: '', status: '', departmen
 
 /** Presets applied when the user switches between the two views. Users can still toggle layers individually. */
 export const VIEW_PRESETS = {
-  issues: { complaints: true, resolved: false, vehicles: false, routes: false, bins: false, buildings: true },
-  cleanroute: { complaints: false, resolved: false, vehicles: true, routes: true, bins: true, buildings: true },
+  issues: { complaints: true, resolved: false, vehicles: true, routes: true, bins: true, buildings: true },
+  cleanroute: { complaints: true, resolved: false, vehicles: true, routes: true, bins: true, buildings: true },
 }
 
 export const STAFF_ROLES = ['officer', 'worker', 'supervisor', 'admin']

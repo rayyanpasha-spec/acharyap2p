@@ -4,7 +4,7 @@ import {
   Mic, MapPin, Sparkles, ClipboardCheck, BadgeCheck, Construction, Trash2, Droplets, Zap, TreePine, Waves, Building2, CircleHelp,
   Users, Landmark, HardHat, ShieldCheck, Settings2, ArrowRight, Truck, CheckCircle2, ArrowUpRight, AlertTriangle, Activity, Trash,
 } from 'lucide-react'
-import { DemoTag, IconTile, Spinner, cn } from '../../components/ui'
+import { IconTile, Spinner, cn } from '../../components/ui'
 import { api } from '../../lib/api'
 import { useAuth } from '../../store/auth'
 import { useMeta } from '../../store/meta'
@@ -68,8 +68,8 @@ export default function Landing() {
           className="absolute inset-0 -z-20 h-full w-full object-cover" style={{ objectPosition: '70% center' }} />
         <div className="absolute inset-0 -z-10" style={{ background: SCRIM }} aria-hidden />
 
-        <div className="mx-auto flex w-full max-w-6xl flex-1 items-center px-4 pb-20 pt-24 sm:pb-24">
-          <div className="grid w-full items-end gap-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-center">
+        <div className="mx-auto flex w-full max-w-7xl flex-1 items-center px-4 pb-20 pt-24 sm:px-6 sm:pb-24">
+          <div className="grid w-full items-end gap-8 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-center xl:grid-cols-[minmax(0,1fr)_430px] xl:gap-14">
             <div className="max-w-[660px]">
               <p className="cl-rise inline-flex items-center rounded-full border border-white/40 bg-black/30 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-white sm:text-xs">
                 {t('landing.eyebrow', 'Built for Bengaluru · Civic intelligence')}
@@ -93,7 +93,7 @@ export default function Landing() {
               </p>
             </div>
 
-            <div className="lg:justify-self-end">
+            <div className="w-full lg:justify-self-end">
               <Snapshot t={t} />
             </div>
           </div>
@@ -201,28 +201,28 @@ function Snapshot({ t }) {
     { icon: Trash, tone: 'saffron', label: t('pub.bins', 'Bins'), value: c.bins_total },
   ]
   return (
-    <aside aria-label={t('pub.snapshot', 'Live snapshot')} className="cl-rise cl-d4 w-full rounded-[14px] border border-line bg-surface p-4 text-ink shadow-[0_8px_24px_rgba(0,0,0,0.18)] sm:max-w-[320px] lg:max-w-none">
+    <aside aria-label={t('pub.snapshot', 'Live snapshot')} className="cl-rise cl-d4 w-full rounded-[16px] border border-line bg-surface p-5 text-ink shadow-[0_12px_32px_rgba(0,0,0,0.22)] sm:max-w-[430px] sm:p-6 lg:max-w-none">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="font-display text-sm font-bold">{t('pub.snapshot', 'Live snapshot')}</h2>
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-success"><span className="cl-pulse h-1.5 w-1.5 rounded-full bg-success" aria-hidden />Live</span>
+        <h2 className="font-display text-xl font-bold">{t('pub.snapshot', 'Live snapshot')}</h2>
+        <span className="inline-flex items-center gap-2 rounded-full border border-success/30 bg-success-100 px-3 py-1 text-sm font-bold text-success"><span className="cl-pulse h-2 w-2 rounded-full bg-success" aria-hidden />Live</span>
       </div>
-      <dl className="mt-3 grid grid-cols-2 gap-2">
+      <dl className="mt-4 grid grid-cols-2 gap-3">
         {items.map((it) => (
-          <div key={it.label} className="rounded-[10px] bg-paper p-2.5">
-            <div className="flex items-center gap-2">
-              <IconTile icon={it.icon} tone={it.tone} size="sm" />
-              <dd className="font-display text-2xl font-extrabold leading-none">{it.value ?? '-'}</dd>
+          <div key={it.label} className="flex min-h-[7.5rem] flex-col justify-between rounded-[12px] border border-line bg-paper p-4">
+            <div className="flex items-center justify-between gap-2">
+              <IconTile icon={it.icon} tone={it.tone} size="md" />
+              <dd className="font-display text-4xl font-bold leading-none">{it.value ?? '-'}</dd>
             </div>
-            <dt className="mt-1.5 text-xs font-medium text-muted">{it.label}</dt>
+            <dt className="mt-3 text-sm font-semibold text-muted">{it.label}</dt>
           </div>
         ))}
       </dl>
-      <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        {s.demo_mode && <DemoTag />}
-        {simulatedGps && <span className="inline-flex items-center rounded border border-dashed border-saffron/60 bg-saffron-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-saffron">{t('pub.simGps', 'Simulated GPS')}</span>}
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        {s.demo_mode && <span className="inline-flex items-center rounded-md border border-dashed border-saffron/60 bg-saffron-100 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-saffron">{t('pub.demoData', 'Demo data')}</span>}
+        {simulatedGps && <span className="inline-flex items-center rounded-md border border-dashed border-saffron/60 bg-saffron-100 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-saffron">{t('pub.simGps', 'Simulated GPS')}</span>}
       </div>
-      <Link to="/city-in-motion" className={cn('mt-3 inline-flex items-center gap-1 text-[13px] font-semibold text-civic hover:underline')}>
-        {t('pub.openMap', 'Open City in Motion')} <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+      <Link to="/city-in-motion" className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-[10px] bg-forest text-base font-semibold text-white transition-colors hover:bg-forest-600">
+        {t('pub.openMap', 'Open City in Motion')} <ArrowUpRight className="h-4 w-4" aria-hidden />
       </Link>
     </aside>
   )

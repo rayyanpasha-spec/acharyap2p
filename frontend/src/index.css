@@ -52,8 +52,8 @@
   --color-cat-public_infrastructure: #6b4c7a;
   --color-cat-other: #737a72;
 
-  --font-sans: "Inter", "Noto Sans Kannada", "Noto Sans Devanagari", "Noto Sans Tamil", "Noto Sans Telugu", "Noto Sans Malayalam", system-ui, sans-serif;
-  --font-display: "Manrope", "Noto Sans Kannada", "Noto Sans Devanagari", "Noto Sans Tamil", "Noto Sans Telugu", "Noto Sans Malayalam", system-ui, sans-serif;
+  --font-sans: Georgia, "Times New Roman", Times, "Noto Sans Kannada", "Noto Sans Devanagari", "Noto Sans Tamil", "Noto Sans Telugu", "Noto Sans Malayalam", serif;
+  --font-display: "Playfair Display", Georgia, "Times New Roman", Times, "Noto Sans Kannada", "Noto Sans Devanagari", "Noto Sans Tamil", "Noto Sans Telugu", "Noto Sans Malayalam", serif;
   --radius-panel: 10px;
 }
 
@@ -91,3 +91,8 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.01em; }
 *::-webkit-scrollbar { width: 8px; height: 8px; }
 *::-webkit-scrollbar-thumb { background: #c9ccc1; border-radius: 8px; }
 *::-webkit-scrollbar-track { background: transparent; }
+
+
+/* ---- Typeface only: Georgia / Times New Roman for body, Playfair Display (high-contrast serif) for headlines + big numerals ---- */
+body, button, input, select, textarea { font-family: var(--font-sans); }
+h1, h2, h3, h4, .font-display { font-family: var(--font-display); font-variant-numeric: lining-nums; font-feature-settings: "lnum" 1, "kern" 1, "liga" 1; }

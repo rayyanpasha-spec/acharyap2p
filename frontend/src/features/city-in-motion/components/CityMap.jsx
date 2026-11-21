@@ -88,6 +88,7 @@ const CityMap = forwardRef(function CityMap(
         })
       } catch (e) { fail('WebGL is not available in this browser.', e); return }
       mapRef.current = map
+      if (import.meta.env.DEV) window.__cityMap = map   // dev-only debug handle
 
       map.addControl(new maplibregl.AttributionControl({ compact: window.innerWidth < 640, customAttribution: IS_DEFAULT_STYLE ? undefined : ATTRIBUTION_TEXT }), 'bottom-right')
       map.addControl(new maplibregl.ScaleControl({ maxWidth: 90, unit: 'metric' }), 'bottom-left')
@@ -97,7 +98,7 @@ const CityMap = forwardRef(function CityMap(
       map.on('error', (ev) => {
         if (!loaded && !ev?.sourceId && !ev?.tile) fail('The map style or tiles could not be loaded.', ev?.error)
       })
-      loadTimer = setTimeout(() => { if (!loaded) fail('The map took too long to load.') }, 25000)
+      loadTimer = setTimeout(() => { if (!loaded) fail('The map took too long to load.') }, 90000)   // slow GPUs / first load: do not drop to 2D early
 
       map.once('load', () => {
         if (disposed) return

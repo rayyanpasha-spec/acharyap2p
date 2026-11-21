@@ -1,14 +1,22 @@
 // Public bins: icon layer coloured by status (forest / amber / saffron / red) with a fill-% label from zoom 14.
 import { useEffect } from 'react'
 import { binsToFC, emptyFC } from '../utils/geojson'
+import { binTowers } from '../utils/solids'
 import { LYR, SRC } from '../utils/mapConfig'
 
-const IDS = [LYR.bin, LYR.binLabel]
+const IDS = [LYR.binTowers, LYR.bin, LYR.binLabel]
 
 export default function BinLayer({ map, fonts, registerPicker, bins, visible }) {
   useEffect(() => {
     try {
       map.addSource(SRC.bins, { type: 'geojson', data: emptyFC() })
+      map.addSource(SRC.binTowers, { type: 'geojson', data: emptyFC() })
+      // 3D bin towers: height = fill level, colour = status
+      map.addLayer({
+        id: LYR.binTowers, type: 'fill-extrusion', source: SRC.binTowers, minzoom: 13,
+        layout: { visibility: 'none' },
+        paint: { 'fill-extrusion-color': ['get', 'color'], 'fill-extrusion-height': ['get', 'h'], 'fill-extrusion-base': 0, 'fill-extrusion-opacity': 0.95, 'fill-extrusion-vertical-gradient': true },
+      })
       map.addLayer({
         id: LYR.bin, type: 'symbol', source: SRC.bins,
         layout: {
@@ -32,11 +40,15 @@ export default function BinLayer({ map, fonts, registerPicker, bins, visible }) 
       try {
         IDS.forEach((id) => { if (map.getLayer(id)) map.removeLayer(id) })
         if (map.getSource(SRC.bins)) map.removeSource(SRC.bins)
+        if (map.getSource(SRC.binTowers)) map.removeSource(SRC.binTowers)
       } catch { /* map already removed */ }
     }
   }, [map, fonts])
 
-  useEffect(() => { try { map.getSource(SRC.bins)?.setData(binsToFC(bins || [])) } catch { /* ignore */ } }, [map, bins])
+  useEffect(() => {
+    try { map.getSource(SRC.bins)?.setData(binsToFC(bins || [])) } catch { /* ignore */ }
+    try { map.getSource(SRC.binTowers)?.setData(binTowers(bins || [])) } catch { /* ignore */ }
+  }, [map, bins])
   useEffect(() => {
     IDS.forEach((id) => { try { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none') } catch { /* ignore */ } })
   }, [map, visible])

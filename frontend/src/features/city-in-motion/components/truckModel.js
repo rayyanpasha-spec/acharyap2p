@@ -4,7 +4,7 @@
 import { GLB_URL, TRUCK_LENGTH_M } from '../utils/mapConfig'
 
 export const PALETTES = {
-  normal: { cab: '#244C39', body: '#F4F4EF', stripe: '#C1782E', hopper: '#8E968F', chassis: '#2B302C', glass: '#2F3F4A', tire: '#1F2321', hub: '#B8BCB4', patch: '#244C39' },
+  normal: { cab: '#2F7D4F', body: '#F4F4EF', stripe: '#C1782E', hopper: '#8E968F', chassis: '#2B302C', glass: '#2F3F4A', tire: '#1F2321', hub: '#B8BCB4', patch: '#244C39' },
   stale: { cab: '#8C938D', body: '#D9DBD5', stripe: '#B5B8B0', hopper: '#B0B5AF', chassis: '#7A807B', glass: '#6C777E', tire: '#5C625E', hub: '#C9CCC6', patch: '#8C938D' },
 }
 

@@ -3,11 +3,12 @@
 // Logic-only component: renders nothing, manages MapLibre layers in effects.
 import { useEffect, useRef } from 'react'
 import { emptyFC } from '../utils/geojson'
+import { complaintPillars } from '../utils/solids'
 import { LYR, SEVERITY, SRC } from '../utils/mapConfig'
 
-const ALL = [LYR.cluster, LYR.clusterCount, LYR.complaint, LYR.complaintLabel, LYR.resolved]
+const ALL = [LYR.complaintPillars, LYR.cluster, LYR.clusterCount, LYR.complaint, LYR.complaintLabel, LYR.resolved]
 const setVis = (map, ids, visible) => ids.forEach((id) => { try { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none') } catch { /* ignore */ } })
-const IDS_ACTIVE = [LYR.cluster, LYR.clusterCount, LYR.complaint, LYR.complaintLabel]
+const IDS_ACTIVE = [LYR.complaintPillars, LYR.cluster, LYR.clusterCount, LYR.complaint, LYR.complaintLabel]
 
 export function addComplaintLayers(map, fonts) {
   map.addSource(SRC.complaints, {
@@ -16,6 +17,13 @@ export function addComplaintLayers(map, fonts) {
   })
   map.addSource(SRC.resolved, { type: 'geojson', data: emptyFC() })
   map.addSource(SRC.flash, { type: 'geojson', data: emptyFC() })
+  map.addSource(SRC.complaintPillars, { type: 'geojson', data: emptyFC() })
+
+  // 3D pillars: height = severity (critical tallest). Real extruded solids, drawn under the icons.
+  map.addLayer({
+    id: LYR.complaintPillars, type: 'fill-extrusion', source: SRC.complaintPillars, minzoom: 13,
+    paint: { 'fill-extrusion-color': ['get', 'color'], 'fill-extrusion-height': ['get', 'h'], 'fill-extrusion-base': 0, 'fill-extrusion-opacity': 0.93, 'fill-extrusion-vertical-gradient': true },
+  })
 
   map.addLayer({
     id: LYR.resolved, type: 'symbol', source: SRC.resolved,
@@ -64,7 +72,7 @@ export default function ComplaintMarkerLayer({ map, fonts, registerPicker, activ
     return () => {
       try {
         [LYR.flash, ...ALL].forEach((id) => { if (map.getLayer(id)) map.removeLayer(id) })
-        ;[SRC.complaints, SRC.resolved, SRC.flash].forEach((id) => { if (map.getSource(id)) map.removeSource(id) })
+        ;[SRC.complaints, SRC.resolved, SRC.flash, SRC.complaintPillars].forEach((id) => { if (map.getSource(id)) map.removeSource(id) })
       } catch { /* map already removed */ }
     }
   }, [map, fonts])
@@ -72,6 +80,7 @@ export default function ComplaintMarkerLayer({ map, fonts, registerPicker, activ
   // data (cluster source re-clusters on setData; no map rebuild)
   useEffect(() => {
     try { map.getSource(SRC.complaints)?.setData(active || emptyFC()) } catch { /* ignore */ }
+    try { map.getSource(SRC.complaintPillars)?.setData(complaintPillars(active)) } catch { /* ignore */ }
     // keep coordinates of features that just left the view (e.g. resolved) so their status flash can still be placed
     const idx = indexRef.current
     for (const f of active?.features || []) idx.set(f.properties.ticket_id, f.geometry.coordinates)
