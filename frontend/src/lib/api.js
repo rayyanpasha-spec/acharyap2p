@@ -1,5 +1,6 @@
 // Single axios instance for the FastAPI backend. Adds the JWT, refreshes it once on 401.
 import axios from 'axios'
+import { noteServerTrouble } from './wake'
 
 export const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8010/api/v1').replace(/\/$/, '')
 export const WS_BASE = (import.meta.env.VITE_WS_BASE_URL || API_BASE.replace(/^http/, 'ws').replace(/\/api\/v1$/, '')).replace(/\/$/, '')
@@ -25,6 +26,13 @@ api.interceptors.response.use(
   async (error) => {
     const original = error.config
     const t = tokenStore.get()
+    // The free-tier server may have gone back to sleep: wait for it (the "waking up" card shows) and repeat a GET once.
+    const st = error.response?.status
+    const asleep = !error.response ? error.code !== 'ERR_CANCELED' && error.code !== 'ECONNABORTED' : st === 502 || st === 503 || st === 504
+    if (asleep && original && !original._wakeRetry && String(original.method || 'get').toLowerCase() === 'get') {
+      original._wakeRetry = true
+      if (await noteServerTrouble()) return api(original)
+    }
     if (error.response?.status === 401 && t?.refresh_token && original && !original._retry && !original.url?.includes('/auth/')) {
       original._retry = true
       try {

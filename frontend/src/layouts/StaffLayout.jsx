@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
-  BarChart3, ClipboardList, LayoutDashboard, ListChecks, LogOut, Menu, ScrollText, SlidersHorizontal, Truck, Users, X, Landmark, Map as MapIcon,
+  BarChart3, ClipboardList, Gift, LayoutDashboard, ListChecks, LogOut, Menu, ScrollText, SlidersHorizontal, Truck, Users, X, Landmark, Map as MapIcon,
 } from 'lucide-react'
 import { useAuth } from '../store/auth'
 import { useMeta } from '../store/meta'
 import { DemoTag, IconTile, cn } from '../components/ui'
+import PageBoundary from '../components/PageBoundary'
 import { Avatar, accentFor } from '../features/staff/common'
 
 function navFor(role) {
@@ -21,6 +22,7 @@ function navFor(role) {
   if (role === 'admin') {
     items.push({ to: '/staff/admin/users', label: 'Users', icon: Users, group: 'Administration', tone: 'plum' })
     items.push({ to: '/staff/admin/config', label: 'Configuration', icon: SlidersHorizontal, tone: 'civic' })
+    items.push({ to: '/staff/admin/rewards', label: 'Rewards', icon: Gift, tone: 'forest' })
     items.push({ to: '/staff/admin/audit', label: 'Audit log', icon: ScrollText, tone: 'saffron' })
   }
   return items
@@ -34,6 +36,7 @@ function titleFor(pathname) {
   if (pathname.startsWith('/staff/cleanroute')) return 'CleanRoute operations'
   if (pathname.startsWith('/staff/admin/users')) return 'Users'
   if (pathname.startsWith('/staff/admin/config')) return 'Configuration'
+  if (pathname.startsWith('/staff/admin/rewards')) return 'Rewards'
   if (pathname.startsWith('/staff/admin/audit')) return 'Audit log'
   return 'Command centre'
 }
@@ -164,7 +167,7 @@ export default function StaffLayout() {
         </aside>
 
         <main id="staff-main" className="shell-main min-w-0 p-3 lg:p-4">
-          <Outlet />
+          <PageBoundary><Outlet /></PageBoundary>
         </main>
       </div>
     </div>

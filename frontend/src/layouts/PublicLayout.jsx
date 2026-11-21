@@ -8,6 +8,7 @@ import { ArrowLeft, Check, Menu, ShieldAlert, X } from 'lucide-react'
 import Logo from '../components/Logo'
 import LanguageSwitcher from '../components/LanguageSwitcher'
 import { Button, cn } from '../components/ui'
+import PageBoundary from '../components/PageBoundary'
 import { useAuth } from '../store/auth'
 import { useMeta } from '../store/meta'
 import { useT } from '../lib/i18n'
@@ -112,7 +113,7 @@ export default function PublicLayout() {
         )}
       </header>
 
-      <main id="main" className="flex-1"><Outlet /></main>
+      <main id="main" className="flex-1"><PageBoundary><Outlet /></PageBoundary></main>
 
       <footer className="border-t border-line bg-surface">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between">

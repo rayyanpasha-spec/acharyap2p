@@ -130,6 +130,21 @@ def _run_triage(db: Session, *, text: str, language: str, imgs: List[_Img], lat:
                             requires_human_review=True, review_reasons=["triage_unavailable"])
 
 
+PHOTO_MISMATCH_MSG = "The photo does not match your description."
+
+
+def _photo_mismatch_detail(t: TriageResult) -> str:
+    why = (t.photo_mismatch_reason or "").strip().rstrip(".")
+    return (f"{PHOTO_MISMATCH_MSG} {why + '. ' if why else ''}Please attach a photo of the problem you described, "
+            "or remove the photo, and try again.")
+
+
+def _guard_photo(t: TriageResult) -> None:
+    """Refuse the submission when the AI saw the photo(s) and they clearly are not the described issue."""
+    if settings.BLOCK_PHOTO_TEXT_MISMATCH and t.photo_mismatch:
+        raise HTTPException(422, _photo_mismatch_detail(t))
+
+
 def _resolve_department(db: Session, t: TriageResult) -> Tuple[Optional[str], Optional[str], Optional[str], bool]:
     """-> (department_code, agency_kind, routing_note, route_requires_review)"""
     if t.department_code:
@@ -268,6 +283,9 @@ def _create_sync(db: Session, user: CurrentUser, *, text: str, language: str, la
         existing = get_complaint_by_ticket(db, existing_ticket or "")
         if existing.status in ("rejected", "duplicate_linked"):
             raise HTTPException(409, "That report is closed and cannot be followed or extended")
+        if action == "add_evidence" and imgs:   # the new photos must show the same issue as the existing report
+            _guard_photo(_run_triage(db, text=f"{existing.original_description}\n{text}".strip(), language=language, imgs=imgs,
+                                     lat=existing.latitude, lng=existing.longitude, locality=existing.locality))
         tn = ticket_number(existing)
         if action == "follow":
             if existing.created_by_user_id != user.id:
@@ -296,6 +314,9 @@ def _create_sync(db: Session, user: CurrentUser, *, text: str, language: str, la
         return {"action": "evidence_added", "ticket_number": tn, "complaint": complaint_out(db, existing, user)}
 
     # ---------------- new complaint (single transaction; caller commits)
+    # Triage first: a report whose photo does not match its text is refused BEFORE anything (or a ticket number) is created.
+    t = _run_triage(db, text=text, language=language, imgs=imgs, lat=lat, lng=lng, locality=locality)
+    _guard_photo(t)
     now = utcnow()
     c = Complaint(
         created_by_user_id=user.id, original_description=text, original_language=language, submitted_via=via,
@@ -316,7 +337,6 @@ def _create_sync(db: Session, user: CurrentUser, *, text: str, language: str, la
         written.append(save_image_bytes(db, im.raw, complaint_id=c.id, user_id=user.id, kind="report",
                                         submission_id=sub.id))
 
-    t = _run_triage(db, text=text, language=language, imgs=imgs, lat=lat, lng=lng, locality=locality)
     db.add(AiAnalysis(complaint_id=c.id, provider=t.provider, model=t.model, result=t.model_dump()))
     dept_code, agency_kind, route_note, route_review = _resolve_department(db, t)
     c.category, c.subcategory = t.category, t.subcategory
@@ -475,6 +495,9 @@ async def add_evidence(ticket_id: str, note: Optional[str] = Form(None), images:
     def work():
         written: List[ComplaintImage] = []
         try:
+            if imgs:   # new photos must show the same issue as the report they are added to
+                _guard_photo(_run_triage(db, text=f"{c.original_description}\n{text}".strip(), language=c.original_language,
+                                         imgs=imgs, lat=c.latitude, lng=c.longitude, locality=c.locality))
             sub = ComplaintSubmission(
                 complaint_id=c.id, user_id=user.id, description=text or "Additional photo evidence",
                 language=user.preferred_language if user.preferred_language in LANGUAGES else "en", via="text",

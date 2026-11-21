@@ -319,12 +319,12 @@ def _placeholder_png(label: str, colour: tuple) -> bytes:
     return out.getvalue()
 
 
-def _ensure_users() -> Dict[str, Dict[str, Any]]:
+def _ensure_users(include_extra: bool = True) -> Dict[str, Dict[str, Any]]:
     """Create missing demo users (skip when e-mail exists). Returns alias -> user dict."""
     store = get_user_store()
     pw_hash: Optional[str] = None
     out: Dict[str, Dict[str, Any]] = {}
-    for email, name, role, dept, lang in [*DEMO_ACCOUNTS, *EXTRA_DEMO_CITIZENS]:
+    for email, name, role, dept, lang in [*DEMO_ACCOUNTS, *(EXTRA_DEMO_CITIZENS if include_extra else [])]:
         u = store.get_by_email(email)
         if u is None:
             if pw_hash is None:
@@ -338,6 +338,11 @@ def _ensure_users() -> Dict[str, Dict[str, Any]]:
                 u = store.get_by_email(email)
         out[_alias(email)] = u
     return out
+
+
+def seed_accounts() -> None:
+    """Only the demo LOGINS (no complaints, vehicles or bins). Used when SEED_DEMO_ACCOUNTS is on and SEED_DEMO_DATA is off."""
+    _ensure_users(include_extra=False)
 
 
 def _officer_for(dept: Optional[str], users: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:

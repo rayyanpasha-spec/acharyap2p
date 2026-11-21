@@ -47,8 +47,8 @@ def taxonomy(db: Session = Depends(get_db)):
 
 @router.get("/demo-accounts")
 def demo_accounts():
-    """Only populated when SEED_DEMO_DATA=true. These are FICTIONAL demo logins (labelled Demo data)."""
-    if not settings.SEED_DEMO_DATA:
+    """Only populated when SEED_DEMO_DATA or SEED_DEMO_ACCOUNTS is true. These are FICTIONAL demo logins (labelled Demo data)."""
+    if not (settings.SEED_DEMO_DATA or settings.SEED_DEMO_ACCOUNTS):
         return {"enabled": False, "password": None, "accounts": []}
     return {
         "enabled": True, "password": settings.DEMO_PASSWORD,

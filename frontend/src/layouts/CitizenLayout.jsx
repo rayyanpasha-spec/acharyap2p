@@ -8,6 +8,7 @@ import {
 import Logo from '../components/Logo'
 import LanguageSwitcher from '../components/LanguageSwitcher'
 import NotificationBell from '../components/NotificationBell'
+import PageBoundary from '../components/PageBoundary'
 import { IconTile, cn } from '../components/ui'
 import { useAuth } from '../store/auth'
 import { useMeta } from '../store/meta'
@@ -115,7 +116,7 @@ export default function CitizenLayout() {
         </div>
       </header>
 
-      <main id="main" className="shell-main p-3 lg:p-4"><Outlet /></main>
+      <main id="main" className="shell-main p-3 lg:p-4"><PageBoundary><Outlet /></PageBoundary></main>
 
       {/* 1-line emergency notice (desktop). On mobile it lives in the More sheet. */}
       <div className="hidden h-7 shrink-0 items-center justify-between gap-4 border-t border-line bg-surface px-4 text-xs text-muted lg:flex">

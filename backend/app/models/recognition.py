@@ -39,6 +39,26 @@ class CivicPointsLedger(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
 
 
+class CivicReward(Base):
+    """A cash-value reward earned for every N (default 10) of a citizen's own reports that were resolved AND verified.
+    The app only RECORDS the entitlement; an admin marks it fulfilled after paying / issuing it outside the app."""
+
+    __tablename__ = "civic_rewards"
+    __table_args__ = (UniqueConstraint("user_id", "milestone", name="uq_reward_user_milestone"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(String(36), index=True)
+    milestone: Mapped[int] = mapped_column(Integer)                      # 1 = first block of N resolved reports, 2 = second ...
+    amount: Mapped[int] = mapped_column(Integer)                         # whole currency units
+    currency: Mapped[str] = mapped_column(String(3), default="INR")
+    status: Mapped[str] = mapped_column(String(12), default="earned", index=True)   # earned | fulfilled
+    complaint_ids: Mapped[Optional[list]] = mapped_column(JSONType, nullable=True)  # the N resolved reports that earned it
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    fulfilled_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    fulfilled_by_user_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    fulfilment_note: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+
+
 class Game(Base):
     __tablename__ = "games"
     code: Mapped[str] = mapped_column(String(40), primary_key=True)  # clean_city | civic_quiz | ...

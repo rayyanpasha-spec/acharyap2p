@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.core.user_store import get_user_store
 from app.models import Category, Certificate, Complaint, ComplaintSubmission
-from app.services import achievement_service, points_service
+from app.services import achievement_service, points_service, reward_service
 from app.services.notification_service import notify
 
 log = logging.getLogger("civiclens.certificates")
@@ -270,4 +270,5 @@ def issue_for_complaint(db: Session, complaint: Complaint, issued_by_user: Any =
                    complaint_id=complaint.id, ticket_number=cert.ticket_number)
     for uid in {owner, *supporters}:
         achievement_service.evaluate(db, uid)
+    reward_service.evaluate(db, owner)   # 10th resolved + verified report -> civic reward
     return cert

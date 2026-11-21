@@ -8,7 +8,7 @@ function Centered({ children }) {
   return <div className="flex min-h-[200px] flex-1 items-center justify-center"><div className="w-full max-w-lg">{children}</div></div>
 }
 
-export default function StepReview({ s, onRetry, title }) {
+export default function StepReview({ s, onRetry, onFix, title }) {
   const { t } = useT()
   const meta = useMeta((x) => x.meta)
   const catName = useMeta((x) => x.categoryName)
@@ -55,6 +55,22 @@ export default function StepReview({ s, onRetry, title }) {
   const notes = Array.isArray(tri.notes) ? tri.notes : []
   const obs = Array.isArray(tri.image_observations) ? tri.image_observations : []
   const emergency = meta?.emergency_notice
+
+  // The AI looked at the photo and it clearly does not show the problem described: the report cannot go further.
+  if (tri.photo_mismatch) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col">
+        <StepHead title={title} />
+        <Centered>
+          <Callout tone="critical" role="alert" title={t('report.mismatch.title', 'The photo does not match your description')}>
+            <p>{tri.photo_mismatch_reason || t('report.mismatch.generic', 'The photo does not appear to show the problem you described.')}</p>
+            <p className="mt-2 text-muted">{t('report.mismatch.help', 'Please attach a photo of the problem you described, or remove the photo. You can also change the description if it is wrong.')}</p>
+            <div className="mt-3"><Button size="sm" onClick={onFix}>{t('report.mismatch.fix', 'Change photo or description')}</Button></div>
+          </Callout>
+        </Centered>
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">

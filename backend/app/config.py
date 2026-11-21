@@ -68,6 +68,9 @@ class Settings(BaseSettings):
     MAX_AUDIO_SIZE_MB: int = 20
     MAX_AUDIO_DURATION_SECONDS: int = 90
     MAX_IMAGES_PER_REPORT: int = 4
+    # Refuse a report/evidence when a vision AI says the photo does not show what the text describes.
+    # (Needs a vision-capable provider; with the offline rules only, photos cannot be checked.)
+    BLOCK_PHOTO_TEXT_MISMATCH: bool = True
 
     # --- Duplicate detection (configurable, README section 4) ---
     SAME_USER_DUPLICATE_RADIUS_METRES: int = 150
@@ -97,6 +100,10 @@ class Settings(BaseSettings):
     SEED_DEMO_DATA: bool = False       # fictional demo users/complaints/vehicles. OFF by default (a public demo password is a risk);
                                        # set true only for local demos (backend/.env.example does)
     DEMO_PASSWORD: str = "Demo@12345"  # password of seeded DEMO accounts only
+    # Ready-made DEMO LOGINS for every role (citizen, officers, workers, supervisor, admin), created at startup WITHOUT any demo
+    # complaints. On by default so a fresh deployment can be signed into straight away. The password is public (see README):
+    # set false on a deployment that holds real data you do not want demo staff to touch (or purge them from the admin console).
+    SEED_DEMO_ACCOUNTS: bool = True
     # First real admin. Created at startup ONLY if no active non-demo admin exists yet. Set both in the host dashboard.
     BOOTSTRAP_ADMIN_EMAIL: str = ""
     BOOTSTRAP_ADMIN_PASSWORD: str = ""      # at least 10 characters

@@ -105,3 +105,50 @@ def test_purge_requires_admin(client, store):
     officer = store.create(email="off@x.test", password_hash=hash_password("Passw0rd!x"), display_name="O", role="officer")
     h = {"Authorization": f"Bearer {create_access_token(officer['id'], 'officer')}"}
     assert client.post("/api/v1/admin/demo-data/purge", headers=h, json={"confirm": "DELETE DEMO DATA"}).status_code == 403
+
+
+# ------------------------------------------------------------------ demo logins that work on a deployment too
+def test_demo_accounts_flag_is_on_by_default_in_code():
+    assert Settings.model_fields["SEED_DEMO_ACCOUNTS"].default is True
+
+
+def test_demo_accounts_created_without_demo_complaints_and_listed(client, db, store, monkeypatch):
+    from app.core.demo_accounts import DEMO_ACCOUNTS
+    monkeypatch.setattr(settings, "SEED_DEMO_ACCOUNTS", True)
+    before = db.query(Complaint).count()
+    seed.ensure_demo_accounts()
+    seed.ensure_demo_accounts()                                              # idempotent
+    for email, _n, role, _d, _l in DEMO_ACCOUNTS:
+        u = store.get_by_email(email)
+        assert u and u["role"] == role and u["is_demo"] is True
+    assert store.get_by_email("neighbour1@civiclens.demo") is None            # only the listed accounts, not the extra residents
+    db.expire_all()
+    assert db.query(Complaint).count() == before                              # logins only: no demo complaints
+    body = client.get("/api/v1/meta/demo-accounts").json()
+    assert body["enabled"] is True and body["password"] == settings.DEMO_PASSWORD
+    assert {a["role"] for a in body["accounts"]} == {"citizen", "officer", "worker", "supervisor", "admin"}
+    r = client.post("/api/v1/auth/login", json={"email": "admin@civiclens.demo", "password": settings.DEMO_PASSWORD})
+    assert r.status_code == 200 and r.json()["user"]["role"] == "admin"
+
+
+def test_bootstrap_promotes_an_existing_google_account_and_sets_its_password(store, monkeypatch):
+    from app.core.security import NO_PASSWORD_HASH, verify_password
+    store.create(email="owner3@example.com", password_hash=NO_PASSWORD_HASH, display_name="Owner", role="citizen")
+    monkeypatch.setattr(settings, "BOOTSTRAP_ADMIN_EMAIL", "Owner3@Example.com")
+    monkeypatch.setattr(settings, "BOOTSTRAP_ADMIN_PASSWORD", "a-long-password-1")
+    seed.ensure_bootstrap_admin()
+    u = store.get_by_email("owner3@example.com")
+    assert u["role"] == "admin" and verify_password("a-long-password-1", u["password_hash"])
+    seed.ensure_bootstrap_admin()                                              # idempotent
+    assert len(store.list(role="admin")) == 1
+
+
+def test_bootstrap_never_overwrites_an_existing_password(store, monkeypatch):
+    from app.core.security import verify_password
+    store.create(email="owner4@example.com", password_hash=hash_password("My-own-password-9"), display_name="Owner", role="citizen")
+    monkeypatch.setattr(settings, "BOOTSTRAP_ADMIN_EMAIL", "owner4@example.com")
+    monkeypatch.setattr(settings, "BOOTSTRAP_ADMIN_PASSWORD", "a-long-password-1")
+    seed.ensure_bootstrap_admin()
+    u = store.get_by_email("owner4@example.com")
+    assert u["role"] == "admin" and verify_password("My-own-password-9", u["password_hash"])
+    assert not verify_password("a-long-password-1", u["password_hash"])

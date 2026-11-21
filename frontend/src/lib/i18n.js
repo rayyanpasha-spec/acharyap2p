@@ -3,6 +3,7 @@
 //   common.js  (owner: citizen-core agent)  navigation, auth, dashboard, statuses, severities, timeline
 //   report.js  (owner: report-flow agent)   the whole "Report an issue" wizard
 // Usage:  const { t, lang, setLang } = useT();  t('report.title', 'Report an issue')   // 2nd arg = English fallback
+import { useCallback, useMemo } from 'react'
 import { create } from 'zustand'
 import common from '../i18n/common'
 import report from '../i18n/report'
@@ -47,5 +48,8 @@ export function translate(lang, key, fallback) {
 export function useT() {
   const lang = useLang((s) => s.lang)
   const setLang = useLang((s) => s.setLang)
-  return { lang, setLang, t: (key, fallback) => translate(lang, key, fallback) }
+  // `t` and the returned object keep the SAME identity until the language changes. Pages list `t` in useCallback/useEffect
+  // dependencies; a new function on every render made those effects refetch on every render (an endless "Loading..." loop).
+  const t = useCallback((key, fallback) => translate(lang, key, fallback), [lang])
+  return useMemo(() => ({ lang, setLang, t }), [lang, setLang, t])
 }

@@ -120,17 +120,18 @@ export default function Landing() {
       </section>
 
       {/* ============ How it works (compact row) ============ */}
-      <section id="how" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-9">
-        <h2 className="font-display text-2xl font-extrabold text-ink">{t('nav.howItWorks', 'How it works')}</h2>
-        <ol className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <section id="how" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-12 sm:px-6">
+        <h2 className="font-display text-3xl font-extrabold text-ink">{t('nav.howItWorks', 'How it works')}</h2>
+        {/* 5 steps = two rows on large screens: 3 on top, 2 wider below */}
+        <ol className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
           {steps.map((s, i) => (
-            <li key={s.title} className="rounded-[14px] border border-line bg-surface p-4">
+            <li key={s.title} className={cn('rounded-[16px] border border-line bg-surface p-6', i < 3 ? 'lg:col-span-2' : 'lg:col-span-3', i === 4 && 'sm:col-span-2 lg:col-span-3')}>
               <div className="flex items-center justify-between">
-                <IconTile icon={s.icon} tone={s.tone} />
-                <span className="font-display text-sm font-extrabold text-muted">0{i + 1}</span>
+                <IconTile icon={s.icon} tone={s.tone} size="lg" />
+                <span className="font-display text-lg font-extrabold text-muted">0{i + 1}</span>
               </div>
-              <h3 className="mt-3 font-display text-[15px] font-bold text-ink">{s.title}</h3>
-              <p className="mt-1 text-[13px] leading-snug text-muted">{s.text}</p>
+              <h3 className="mt-4 font-display text-lg font-bold text-ink">{s.title}</h3>
+              <p className="mt-1.5 text-[15px] leading-relaxed text-muted">{s.text}</p>
             </li>
           ))}
         </ol>
@@ -138,22 +139,23 @@ export default function Landing() {
 
       {/* ============ Category -> department grid ============ */}
       <section id="categories" className="scroll-mt-20 border-y border-line bg-surface">
-        <div className="mx-auto max-w-6xl px-4 py-9">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
           <div className="flex flex-wrap items-end justify-between gap-2">
-            <h2 className="font-display text-2xl font-extrabold text-ink">{t('nav.categories', 'What you can report')}</h2>
+            <h2 className="font-display text-3xl font-extrabold text-ink">{t('nav.categories', 'What you can report')}</h2>
             <p className="text-sm text-muted">{t('cat.sub', 'Each category is routed to the department that normally handles it.')}</p>
           </div>
           {!meta && !metaError && <Spinner />}
           {metaError && !meta && <p className="mt-4 text-sm text-muted">{t('cat.unavailable', 'Categories could not be loaded right now.')}</p>}
-          <ul className="mt-5 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
-            {cats.map((c) => {
+          {/* 7 categories = two rows on large screens: 4 on top, 3 wider below */}
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-12">
+            {cats.map((c, i) => {
               const Icon = CAT_ICON[c.code] || CircleHelp
               return (
-                <li key={c.code} className="flex items-center gap-3 rounded-[14px] border border-line bg-paper p-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] text-white" style={{ background: `var(--color-cat-${c.code})` }}><Icon className="h-5 w-5" aria-hidden /></span>
+                <li key={c.code} className={cn('flex items-start gap-4 rounded-[16px] border border-line bg-paper p-5', cats.length === 7 ? (i < 4 ? 'lg:col-span-3' : 'lg:col-span-4') : 'lg:col-span-3')}>
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] text-white" style={{ background: `var(--color-cat-${c.code})` }}><Icon className="h-6 w-6" aria-hidden /></span>
                   <div className="min-w-0">
-                    <h3 className="truncate font-display text-sm font-bold text-ink">{c.name}</h3>
-                    <p className="truncate text-xs text-muted">{t('cat.routes', 'Routes to')}: <span className="font-semibold text-civic">{deptName(c.default_department_code)}</span></p>
+                    <h3 className="font-display text-lg font-bold leading-tight text-ink">{c.name}</h3>
+                    <p className="mt-1 text-sm leading-snug text-muted">{t('cat.routes', 'Routes to')}: <span className="font-semibold text-civic">{deptName(c.default_department_code)}</span></p>
                   </div>
                 </li>
               )
@@ -163,14 +165,15 @@ export default function Landing() {
       </section>
 
       {/* ============ Role strip ============ */}
-      <section id="who" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-9">
-        <h2 className="font-display text-2xl font-extrabold text-ink">{t('nav.whoFor', 'Who it is for')}</h2>
-        <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          {roles.map((r) => (
-            <li key={r.name} className="rounded-[14px] border border-line bg-surface p-4">
-              <IconTile icon={r.icon} tone={r.tone} size="sm" />
-              <h3 className="mt-2.5 font-display text-[15px] font-bold text-ink">{r.name}</h3>
-              <p className="mt-1 text-[13px] leading-snug text-muted">{r.text}</p>
+      <section id="who" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-12 sm:px-6">
+        <h2 className="font-display text-3xl font-extrabold text-ink">{t('nav.whoFor', 'Who it is for')}</h2>
+        {/* 5 roles = two rows on large screens: 3 on top, 2 wider below */}
+        <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+          {roles.map((r, i) => (
+            <li key={r.name} className={cn('rounded-[16px] border border-line bg-surface p-6', i < 3 ? 'lg:col-span-2' : 'lg:col-span-3', i === 4 && 'sm:col-span-2 lg:col-span-3')}>
+              <IconTile icon={r.icon} tone={r.tone} size="lg" />
+              <h3 className="mt-4 font-display text-lg font-bold text-ink">{r.name}</h3>
+              <p className="mt-1.5 text-[15px] leading-relaxed text-muted">{r.text}</p>
             </li>
           ))}
         </ul>

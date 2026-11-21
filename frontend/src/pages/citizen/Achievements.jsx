@@ -9,6 +9,7 @@ import LevelCard from '../../features/civicverse/LevelCard'
 import GrowingCity from '../../features/civicverse/GrowingCity'
 import AchievementGrid from '../../features/civicverse/AchievementGrid'
 import GoldenTree from '../../features/civicverse/GoldenTree'
+import RewardCard from '../../features/civicverse/RewardCard'
 import CivicBot from '../../features/civicverse/CivicBot'
 
 const STORY = [
@@ -68,6 +69,7 @@ export default function Achievements() {
           <div className="flex min-h-0 flex-col gap-3">
             {achErr && <Panel><ErrorState message={achErr} onRetry={load} /></Panel>}
             {(ach || profile) && <LevelCard level={level} pointsTotal={points} verified={verified} className="shrink-0" />}
+            <RewardCard className="shrink-0" />
             {profErr && <Panel><ErrorState message={profErr} onRetry={load} /></Panel>}
             {profile && <GrowingCity items={profile.growing_city} className="min-h-[300px] lg:min-h-0 lg:flex-1" />}
           </div>

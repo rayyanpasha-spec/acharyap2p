@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1 import (admin, ai, analytics, auth, certificates, city_twin, complaints, games, garbage, images,
-                        locations, meta, notifications, officer, voice)
+                        locations, meta, notifications, officer, rewards, voice)
 
 api_router = APIRouter()
 api_router.include_router(auth.router)
@@ -20,6 +20,7 @@ api_router.include_router(garbage.router)
 api_router.include_router(garbage.demo_router)
 api_router.include_router(certificates.router)
 api_router.include_router(games.router)
+api_router.include_router(rewards.router)
 api_router.include_router(city_twin.router)
 
 # mounted at root: /ws/v1/garbage/live and /ws/v1/city-twin/live

@@ -27,3 +27,7 @@ class TriageResult(BaseModel):
     model: Optional[str] = None
     photo_analysis: str = "not_provided"     # not_provided | analysed | unavailable
     notes: List[str] = Field(default_factory=list)  # e.g. "OpenAI unavailable, used Ollama backup"
+    # True when a vision-capable AI looked at the photo(s) and they clearly do not show what the text describes.
+    # Intake refuses such reports (see BLOCK_PHOTO_TEXT_MISMATCH); it is never set when photos were not analysed.
+    photo_mismatch: bool = False
+    photo_mismatch_reason: Optional[str] = None

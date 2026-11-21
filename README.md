@@ -34,6 +34,14 @@ Described in detail in `docs/API_CONTRACT.md` (see the docs for exact request/re
   `resolved` (via verify-resolution); reopen requests are decided by a supervisor.
 * **Recognition** - certificates of appreciation (PDF with QR code and public verification page), civic points,
   achievements, and two games (Clean City Challenge, Civic Quiz Arena).
+* **Civic reward** - a citizen earns INR 500 for every 10 of their OWN reports that are resolved AND verified by a
+  supervisor (open, rejected or duplicate reports do not count). The app only records the entitlement; an admin marks it
+  given after paying it outside the app (`/staff/admin/rewards`). Amount, threshold, currency and an on/off switch live in
+  the `rewards` app setting (defaults: 10 reports, 500, INR, enabled). See `backend/app/services/reward_service.py`.
+* **Photo must match the report** - with OpenAI vision available, a report (or extra evidence) whose photo clearly does
+  not show the problem described is refused with a clear message, and the review step blocks it before submit. With only
+  the offline rules or Ollama without a vision model, photos cannot be checked, so nothing is blocked
+  (`BLOCK_PHOTO_TEXT_MISMATCH=false` turns the guard off).
 * **CleanRoute** - SIMULATED garbage-truck positions and bin fill levels with a live WebSocket feed.
 * **City in Motion (3D)** - route `/city-in-motion`: MapLibre GL map of Bengaluru with real extruded 3D buildings
   (OpenFreeMap vector tiles, no API key), clustered complaint markers, simulated garbage trucks (Three.js), routes and bins.
@@ -81,10 +89,47 @@ More detail and diagrams: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 Public self-registration always creates a citizen. Staff accounts are created by an admin.
 
+## How to sign in (local and deployed)
+
+Open the site, press **Log in**, type the email and password, press **Log in**. You land on the right home screen for your
+role (citizens on `/app`, workers on `/staff/worker`, officers, supervisors and admins on `/staff`). On the login page, the
+**Try a demo account** panel lists every demo login and fills the form for you. If the deployed backend is asleep (free
+hosting), a "Waking up the server" card appears for about 30 to 60 seconds; wait for it, nothing is wrong.
+
+### Admin login (real account)
+
+| | |
+|---|---|
+| Email | `mohammedbilalgirach@gmail.com` |
+| Password | `BilalRayyan123` |
+
+1. Go to the site and press **Log in**.
+2. Enter the email and password above and press **Log in**. You arrive at the command centre (`/staff`). The left menu has
+   **Users**, **Configuration**, **Rewards** and **Audit log**, which only an admin sees.
+3. Create staff accounts under **Users -> Create staff account** (or use the demo staff accounts below).
+
+How this account exists: the backend creates it (or promotes the existing account with that email to admin) at startup from
+two environment variables. Set them on the host (Render -> Environment) and redeploy:
+
+```
+BOOTSTRAP_ADMIN_EMAIL=mohammedbilalgirach@gmail.com
+BOOTSTRAP_ADMIN_PASSWORD=BilalRayyan123
+```
+
+If that email already had a Google sign-in account, it keeps working with Google and also gets the password above. An
+existing password is never overwritten. **Anyone who can read this file can sign in as admin: change the password in the
+host settings (and here) before sharing the repository or the site publicly.**
+
+### Demo staff logins (work locally AND on the deployed site)
+
+`SEED_DEMO_ACCOUNTS=true` (the default) creates the accounts below at startup, on every deployment, with **no demo
+complaints**. All of them use the password **`Demo@12345`** (`DEMO_PASSWORD`). They are fictional and the password is public:
+set `SEED_DEMO_ACCOUNTS=false`, or remove them from the admin console, for a site that holds real data.
+
 ## Demo accounts
 
-Created only when `SEED_DEMO_DATA=true`. They are fictional. The password is `DEMO_PASSWORD` (default `Demo@12345`).
-Change it for anything that is reachable from the internet, or turn demo seeding off.
+Created when `SEED_DEMO_ACCOUNTS=true` (logins only) or `SEED_DEMO_DATA=true` (logins plus fictional complaints, vehicles and
+bins). They are fictional. The password is `DEMO_PASSWORD` (default `Demo@12345`).
 
 | Email | Name | Role | Department |
 |---|---|---|---|
@@ -209,7 +254,9 @@ Defaults are in `backend/app/config.py`. `backend/.env.example` shows the common
 | `GARBAGE_TRACKER_MODE` | `simulation` | CleanRoute data source (only the simulation exists) |
 | `GARBAGE_SIMULATION_INTERVAL_SECONDS` | `3` | |
 | `GARBAGE_SIMULATION_AUTOSTART` | `true` | Start the simulator on boot |
+| `BLOCK_PHOTO_TEXT_MISMATCH` | `true` | Refuse reports whose photo does not show the described problem (needs OpenAI vision) |
 | `SEED_REFERENCE_DATA` | `true` | Seed departments, categories, routing rules, SLA, games |
+| `SEED_DEMO_ACCOUNTS` | `true` | Create the demo logins for every role at startup (no demo complaints). Works on deployments too |
 | `SEED_DEMO_DATA` | `true` | Seed fictional demo users, complaints, vehicles, bins |
 | `DEMO_PASSWORD` | `Demo@12345` | Password of the seeded demo accounts |
 
@@ -341,7 +388,8 @@ Demo data is **off by default** (`SEED_DEMO_DATA=false`). A site that was starte
 accounts (password `Demo@12345`, including an admin), so after switching it off:
 
 1. In Render set `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD` (at least 10 characters) and `SEED_DEMO_DATA=false`,
-   then redeploy. At startup the app creates your admin **only if no active non-demo admin exists**.
+   then redeploy. At startup the app makes that email an admin: it promotes the existing account with that email, or (only if
+   no active non-demo admin exists yet) creates it. An existing password is never overwritten.
 2. Sign in as that admin, open **Staff > Admin > Configuration > System > Demo data > Remove demo data**, and type
    `DELETE DEMO DATA`. This deletes the fictional complaints and simulated CleanRoute data and **deactivates** all demo
    accounts. Real data is untouched. It is refused for a demo admin, so you cannot lock yourself out.
@@ -349,6 +397,7 @@ accounts (password `Demo@12345`, including an admin), so after switching it off:
 3. With demo data off the site starts empty: there are no fictional vehicles, bins or complaints on the City in Motion map until
    real ones exist. The category / department / routing configuration is kept.
 
-Remove the bootstrap variables afterwards if you like; they are only used while no real admin exists. Locally, keep
-`SEED_DEMO_DATA=true` in `backend/.env` if you want the demo data for development.
+Demo LOGINS (no demo complaints) are separate: `SEED_DEMO_ACCOUNTS` (default `true`) keeps the demo staff accounts available on
+the deployed site. Set it to `false` when the site holds real data, and run **Remove demo data** to deactivate the ones that
+already exist. Locally, keep `SEED_DEMO_DATA=true` in `backend/.env` if you want the full demo data for development.
 

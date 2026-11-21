@@ -18,14 +18,14 @@ from app.models import (
     AiAnalysis, Assignment, BinReading, CivicPointsLedger, CollectionEvent, Comment, Complaint, ComplaintFollower,
     ComplaintImage, ComplaintLink, ComplaintSubmission, DuplicateCandidate, GameSession, GarbageBin, GarbageRoute,
     GarbageVehicle, Notification, ResolutionEvidence, StatusHistory, UserAchievement, VehicleLocation,
-    VoiceTranscript, Certificate,
+    VoiceTranscript, Certificate, CivicReward,
 )
 
 log = logging.getLogger("civiclens.demo_purge")
 
 _BY_COMPLAINT = (ComplaintSubmission, ComplaintFollower, ComplaintImage, AiAnalysis, StatusHistory, Comment,
                  Assignment, ResolutionEvidence, Notification, Certificate, VoiceTranscript)
-_BY_USER = (Notification, CivicPointsLedger, GameSession, UserAchievement)
+_BY_USER = (Notification, CivicPointsLedger, GameSession, UserAchievement, CivicReward)
 
 
 def _unlink(path: Path) -> None:

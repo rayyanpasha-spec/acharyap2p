@@ -135,7 +135,7 @@ export default function Report() {
     if (s.step === 0) return len >= MIN_TEXT && len <= MAX_TEXT
     if (s.step === 1) return !!s.loc && s.loc.confirmed && (!outside || s.outsideAck)
     if (s.step === 2) return s.dup.status === 'done' && dupMatches.length === 0
-    if (s.step === 3) return s.preview.status === 'done' || s.preview.status === 'error'
+    if (s.step === 3) return (s.preview.status === 'done' && !s.preview.data?.triage?.photo_mismatch) || s.preview.status === 'error'
     return false
   })()
 
@@ -222,7 +222,7 @@ export default function Report() {
       if (s.dup.status !== 'done') return ''
       return dupMatches.length ? fill(t('report.dup.n_found', '{n} similar report(s) nearby'), { n: dupMatches.length }) : t('report.dup.none', 'No similar reports found nearby')
     }
-    if (s.step === 3) return s.preview.status === 'done' && tri ? [tri.severity && tri.severity.charAt(0).toUpperCase() + tri.severity.slice(1), s.preview.data.category_name || tri.category].filter(Boolean).join(' · ') : ''
+    if (s.step === 3) return s.preview.status === 'done' && tri && !tri.photo_mismatch ? [tri.severity && tri.severity.charAt(0).toUpperCase() + tri.severity.slice(1), s.preview.data.category_name || tri.category].filter(Boolean).join(' · ') : ''
     return t('report.sub.ready', 'Ready to submit')
   })()
 
@@ -263,7 +263,7 @@ export default function Report() {
           {STEPS[s.step] === 'describe' && <StepDescribe s={s} set={set} meta={meta} prefill={prefill} title={titles[0]} />}
           {STEPS[s.step] === 'location' && <StepLocation s={s} set={set} meta={meta} title={titles[1]} />}
           {STEPS[s.step] === 'nearby' && <StepNearby s={s} set={set} onChoose={choose} onRetry={runDup} onNewAnyway={() => choose({ action: 'new', reason: '' })} title={titles[2]} />}
-          {STEPS[s.step] === 'review' && <StepReview s={s} onRetry={runPreview} title={titles[3]} />}
+          {STEPS[s.step] === 'review' && <StepReview s={s} onRetry={runPreview} onFix={() => goto(0)} title={titles[3]} />}
           {STEPS[s.step] === 'submit' && <StepSubmit s={s} goto={goto} title={titles[4]} />}
         </div>
 

@@ -26,18 +26,37 @@ def ensure_bootstrap_admin() -> None:
     if len(password) < 10:
         log.warning("BOOTSTRAP_ADMIN_PASSWORD is shorter than 10 characters; bootstrap admin NOT created")
         return
-    from app.core.security import hash_password
+    from app.core.security import has_password, hash_password
     from app.core.user_store import create_user_checked, get_user_store
 
     store = get_user_store()
-    if any(u.get("is_active", True) and not u.get("is_demo") for u in store.list(role="admin", limit=1000)):
+    existing = store.get_by_email(email)
+    if existing:
+        # The owner configured this address as the admin: make sure the account is an active admin. A password is only set
+        # when the account has none (e.g. it was created through Google sign-in); an existing password is never overwritten.
+        changes = {}
+        if existing.get("role") != "admin":
+            changes["role"] = "admin"
+        if not existing.get("is_active", True):
+            changes["is_active"] = True
+        if not has_password(existing.get("password_hash") or ""):
+            changes["password_hash"] = hash_password(password)
+        if changes:
+            store.update(existing["id"], **changes)
+            log.info("bootstrap admin account updated: %s (%s)", email, ", ".join(sorted(k for k in changes if k != "password_hash")) or "password set")
         return
-    if store.get_by_email(email):
-        log.warning("BOOTSTRAP_ADMIN_EMAIL belongs to an existing non-admin account; bootstrap admin NOT created")
+    if any(u.get("is_active", True) and not u.get("is_demo") for u in store.list(role="admin", limit=1000)):
         return
     create_user_checked(email=email, password_hash=hash_password(password),
                         display_name=settings.BOOTSTRAP_ADMIN_NAME or "Administrator", role="admin")
     log.info("bootstrap admin created: %s", email)
+
+
+def ensure_demo_accounts() -> None:
+    """Demo logins for every role, WITHOUT demo complaints (see SEED_DEMO_ACCOUNTS). Idempotent; never touches passwords."""
+    from app import seed_demo
+
+    seed_demo.seed_accounts()
 
 
 def run_all() -> None:
@@ -56,4 +75,9 @@ def run_all() -> None:
         with SessionLocal() as db:
             getattr(mod, func)(db)
         log.info("seeded: %s", module)
+    if settings.SEED_DEMO_ACCOUNTS and not settings.SEED_DEMO_DATA:    # (the full demo seeder creates them too)
+        try:
+            ensure_demo_accounts()
+        except Exception:
+            log.exception("demo accounts could not be created")
     ensure_bootstrap_admin()

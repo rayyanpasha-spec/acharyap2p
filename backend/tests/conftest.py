@@ -15,6 +15,7 @@ os.environ.update({
     "OLLAMA_VISION_MODEL": "",
     "GEOCODER_PROVIDER": "none",
     "SEED_DEMO_DATA": "false",
+    "SEED_DEMO_ACCOUNTS": "false",
     "SEED_REFERENCE_DATA": "true",
     "GARBAGE_SIMULATION_AUTOSTART": "false",
     "ROUTE_SNAPPING": "false",

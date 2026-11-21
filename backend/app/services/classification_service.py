@@ -35,6 +35,15 @@ class ModelTriage(BaseModel):
     duration: float = 0.0
     danger_flag: bool = False
     photo_text_conflict: bool = False
+    photo_mismatch_reason: Optional[str] = None
+
+    @field_validator("photo_mismatch_reason", mode="before")
+    @classmethod
+    def _mismatch_reason(cls, v):
+        if not isinstance(v, str):
+            return None
+        v = " ".join(v.split())[:200]
+        return v or None
 
     @field_validator("category", mode="before")
     @classmethod
@@ -160,7 +169,12 @@ def build_system_prompt(taxonomy_names: Dict[str, Dict]) -> str:
         "(location_sensitivity = near school/hospital/bus stop/junction; duration = how long it has persisted),\n"
         '  "danger_flag": true only for credible immediate danger (live/exposed/fallen wire, sparking, open manhole '
         "on a road, large tree blocking a road or on a power line, flooding with electricity, gas smell),\n"
-        '  "photo_text_conflict": true only if the photo clearly contradicts the text.\n'
+        '  "photo_text_conflict": when photos are attached, true if the photo does NOT show the kind of problem the text '
+        "describes: the subject is unrelated (a person or selfie, pet, food, indoor room, screenshot, meme, document, "
+        "vehicle interior) or it shows a different civic issue than the text. false if there are no photos, or the photo "
+        "plausibly shows the described problem even if it is dark, blurry or taken from a distance,\n"
+        '  "photo_mismatch_reason": when photo_text_conflict is true, ONE short English sentence saying what the photo '
+        "shows versus what the text says (no more than 160 characters), else null.\n"
         "Do not include reasoning steps. Use only category and subcategory codes from this taxonomy:\n"
         f"{taxonomy}\n"
         'If nothing fits use category "other" with subcategory "other".'

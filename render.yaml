@@ -56,6 +56,10 @@ services:
       # Fictional demo users/complaints + simulated CleanRoute data. Set to 'false' for anything that is not a demo.
       - key: SEED_DEMO_DATA
         value: "false"
+      # Ready-made demo LOGINS for every role (no demo complaints). Password = DEMO_PASSWORD (Demo@12345, public, see README).
+      # Set to 'false' once the site holds real data.
+      - key: SEED_DEMO_ACCOUNTS
+        value: "true"
       # First real admin (created once at startup if no non-demo admin exists). Set both in the Render dashboard.
       - key: BOOTSTRAP_ADMIN_EMAIL
         sync: false

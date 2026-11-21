@@ -41,6 +41,7 @@ class _Proposal:
     problems: List[str] = field(default_factory=list)
     drivers: List[str] = field(default_factory=list)
     rules_certainty: Optional[float] = None
+    mismatch_reason: Optional[str] = None
 
 
 def _provider_order() -> List[str]:
@@ -119,6 +120,7 @@ def _model_proposal(mt, model: str, photo: str, provider: str, tax: Dict[str, Se
         translated=mt.translated_description, observations=list(mt.image_observations), model_reason=mt.reason,
         confidence=mt.confidence, factors=factors, danger=mt.danger_flag, conflict=mt.photo_text_conflict,
         photo_analysis=photo, problems=problems, drivers=list(rules.drivers),
+        mismatch_reason=getattr(mt, "photo_mismatch_reason", None),
     )
 
 
@@ -153,6 +155,21 @@ def _run(db: Session, *, text: str, language: str, images, latitude, longitude, 
         notes[-1] = notes[-1] + f" -> {'Ollama' if proposal.provider == 'ollama' else proposal.provider} used"
     elif previous:
         notes.append("Fell back to offline keyword rules")
+
+    # --- dedicated "does the photo show what the text says?" check (a focused call is far more reliable than the flag
+    #     inside the big triage JSON). Only when OpenAI really analysed the photos; its own failure means "unknown".
+    if photos and proposal.provider == "openai" and proposal.photo_analysis == "analysed" and not proposal.conflict:
+        try:
+            verdict = openai_service.photo_match(clean, images)
+        except Exception:
+            verdict = None
+        if verdict is not None:
+            matches, shows, reason = verdict
+            if not matches:
+                proposal.conflict = True
+                proposal.mismatch_reason = reason or (f"The photo shows: {shows}." if shows else None)
+            elif shows and not proposal.observations:
+                proposal.observations = [shows]
 
     # --- photo notes
     if photos and proposal.photo_analysis == "unavailable":
@@ -212,7 +229,11 @@ def _run(db: Session, *, text: str, language: str, images, latitude, longitude, 
                                                proposal.drivers, sev.escalated_by)
 
     translated = proposal.translated if lang != "en" else None
+    # Only a real vision analysis can say "this photo is not what the text describes".
+    mismatch = bool(proposal.conflict and photos and proposal.photo_analysis == "analysed")
     return TriageResult(
+        photo_mismatch=mismatch,
+        photo_mismatch_reason=(proposal.mismatch_reason or "The photo does not appear to show the problem described.") if mismatch else None,
         language=lang, category=category, subcategory=sub,
         summary=_short(proposal.summary) or _short(clean), translated_description=translated,
         severity=sev.label, severity_score=sev.score, reason=reason,
