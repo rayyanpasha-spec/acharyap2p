@@ -39,3 +39,9 @@ The react-leaflet fallback (shown only when WebGL / MapLibre cannot start) reuse
 ## Data honesty
 
 Vehicle positions and bin fill levels shown by City in Motion in this prototype are **simulated** and labelled "Simulated GPS" / "Simulated sensor" in the interface, with a persistent "DEMO MODE" banner. Complaint markers come from the CivicLens database; public viewers see coordinates rounded to 3 decimal places.
+
+## Hero photograph
+
+| File | Subject | Source / licence |
+|---|---|---|
+| `frontend/public/images/vidhana-soudha.jpg` | Vidhana Soudha, Bengaluru (hero background) | Supplied by the project owner. Photographer/licence were not stated - **confirm you have the right to publish this image** and record the credit here. The image has the caption "VIDHANA SOUDHA" baked into it. |

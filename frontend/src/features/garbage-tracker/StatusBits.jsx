@@ -4,7 +4,15 @@ import { Truck, Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { DEMO_TEXT, fmtClockSec } from './shared'
 
 /** Permanent banner shown on EVERY CleanRoute view. */
-export function DemoBanner() {
+export function DemoBanner({ compact = false }) {
+  if (compact) {
+    return (
+      <div role="note" className="flex shrink-0 items-center gap-2 rounded-[10px] border border-saffron/40 bg-saffron-100 px-3 py-1.5 text-[13px]">
+        <DemoTag kind="simulated" />
+        <p className="min-w-0 flex-1 text-ink"><span className="font-bold">{DEMO_TEXT}</span> <span className="hidden text-ink/75 lg:inline">Routes are straight demo lines; positions, fill levels and ETAs come from a simulator.</span></p>
+      </div>
+    )
+  }
   return (
     <div role="note" className="mb-4 flex flex-wrap items-start gap-3 rounded-[10px] border border-saffron/40 bg-saffron-100 px-4 py-3 text-sm">
       <DemoTag kind="simulated" className="mt-0.5" />
@@ -17,12 +25,24 @@ export function DemoBanner() {
 }
 
 /** Connection state, last-updated time, source label and stale warning. */
-export function LiveStatusBar({ conn, polling, lastUpdated, stale, sourceLabel, error, onRetry }) {
+export function LiveStatusBar({ conn, polling, lastUpdated, stale, sourceLabel, error, onRetry, compact = false }) {
   const [, setTick] = useState(0)
   useEffect(() => { const t = setInterval(() => setTick((n) => n + 1), 1000); return () => clearInterval(t) }, [])
   const ago = lastUpdated ? Math.max(0, Math.round((Date.now() - lastUpdated) / 1000)) : null
   const tone = conn === 'live' ? 'success' : conn === 'reconnecting' ? 'saffron' : 'neutral'
   const label = conn === 'live' ? 'Live' : conn === 'reconnecting' ? 'Reconnecting' : 'Offline'
+  if (compact) {
+    return (
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
+        <Badge tone={tone} dot>{label}</Badge>
+        {polling && <span className="text-xs text-muted">Refreshing every 5 s</span>}
+        <span className="text-muted">Updated <span className="font-medium text-ink">{fmtClockSec(lastUpdated)}</span>{ago != null && ` (${ago} s ago)`}</span>
+        <span className="hidden text-muted sm:inline">Source: <span className="font-medium text-ink">simulated</span> <span className="text-xs">({sourceLabel})</span></span>
+        {stale && <span title="No update has arrived for over 20 seconds. Positions shown are the last known ones."><Badge tone="warning">Data may be stale</Badge></span>}
+        {error && <span className="inline-flex items-center gap-1.5"><Badge tone="critical">Could not load CleanRoute data</Badge>{onRetry && <button type="button" onClick={onRetry} className="text-xs font-semibold text-civic underline">Try again</button>}</span>}
+      </div>
+    )
+  }
   return (
     <div className="mb-4 space-y-2">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
@@ -45,7 +65,25 @@ export function LiveStatusBar({ conn, polling, lastUpdated, stale, sourceLabel, 
   )
 }
 
-export function SummaryStats({ summary }) {
+export function SummaryStats({ summary, compact = false }) {
+  if (compact) {
+    const tiles = [
+      { label: 'Vehicles', value: summary.vehicles_active, icon: Truck, cls: 'border-civic/15 bg-civic-50 text-civic', hint: 'Vehicles active (simulated)' },
+      { label: 'Bins', value: summary.bins_total, icon: Trash2, cls: 'border-forest/15 bg-forest-50 text-forest', hint: 'Bins tracked (simulated)' },
+      { label: 'At risk', value: summary.bins_overflow_risk, icon: AlertTriangle, cls: summary.bins_overflow_risk ? 'border-critical/25 bg-critical-100/70 text-critical' : 'border-line bg-paper text-ink', hint: `Overflow risk - ${summary.bins_collection_recommended} need collection` },
+      { label: 'Collected', value: summary.collections_today, icon: CheckCircle2, cls: 'border-success/20 bg-success-100/70 text-success', hint: 'Collections today (simulated events)' },
+    ]
+    return (
+      <div className="grid grid-cols-4 gap-2">
+        {tiles.map((x) => (
+          <div key={x.label} title={x.hint} className={`rounded-xl border px-2 py-1.5 ${x.cls}`}>
+            <div className="flex items-center justify-between"><p className="font-display text-lg font-extrabold leading-none">{x.value ?? 0}</p><x.icon className="h-3.5 w-3.5" aria-hidden /></div>
+            <p className="mt-1 truncate text-[11px] font-medium text-ink/70">{x.label}</p>
+          </div>
+        ))}
+      </div>
+    )
+  }
   return (
     <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
       <Stat label="Vehicles active" value={summary.vehicles_active} accent="civic" icon={Truck} hint="Simulated" />

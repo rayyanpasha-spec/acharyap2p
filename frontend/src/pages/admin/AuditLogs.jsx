@@ -1,8 +1,9 @@
 import { Fragment, useState } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
-import { Badge, Button, Card, EmptyState, ErrorState, Field, Input, PageHeader, Spinner, Table, Td, Th } from '../../components/ui'
+import { ChevronDown, ChevronRight, ScrollText } from 'lucide-react'
+import { Badge, Button, EmptyState, ErrorState, Input, Page, Panel, Spinner } from '../../components/ui'
 import { fmtDateTime } from '../../lib/format'
-import { RoleChip, useApi } from '../../features/admin/shared'
+import { ADMIN_CTRL, RoleChip, Scroll, useApi } from '../../features/admin/shared'
+import { Cell, HCell } from '../../features/staff/common'
 
 const PAGE_SIZE = 25
 const show = (v) => (v === undefined ? '' : typeof v === 'string' ? v : JSON.stringify(v, null, 2))
@@ -60,37 +61,53 @@ export default function AuditLogs() {
 
   const apply = (e) => { e.preventDefault(); setPage(1); setFilters(draft) }
   const entityOf = (l) => l.entity || [l.entity_type, l.entity_id].filter((x) => x != null && x !== '').join(' ') || '-'
+  const clear = () => { const z = { action: '', actor: '', entity: '' }; setDraft(z); setFilters(z); setPage(1) }
 
   return (
-    <div>
-      <PageHeader title="Audit log" subtitle="Every admin and staff mutation with before and after values. Append-only." />
-      <Card className="mb-4 p-3">
-        <form className="flex flex-wrap items-end gap-3" onSubmit={apply}>
-          <Field label="Action" htmlFor="al-a"><Input id="al-a" placeholder="e.g. user.update" value={draft.action} onChange={(e) => setDraft({ ...draft, action: e.target.value })} /></Field>
-          <Field label="Actor" htmlFor="al-actor"><Input id="al-actor" placeholder="Name or id" value={draft.actor} onChange={(e) => setDraft({ ...draft, actor: e.target.value })} /></Field>
-          <Field label="Entity" htmlFor="al-e"><Input id="al-e" placeholder="e.g. complaint" value={draft.entity} onChange={(e) => setDraft({ ...draft, entity: e.target.value })} /></Field>
-          <Button type="submit" variant="secondary">Apply filters</Button>
-          <Button type="button" variant="ghost" onClick={() => { const z = { action: '', actor: '', entity: '' }; setDraft(z); setFilters(z); setPage(1) }}>Clear</Button>
+    <Page title="Audit log" subtitle="Every admin and staff mutation with before and after values. Append-only.">
+      <Panel
+        className="flex-1"
+        title="Entries"
+        subtitle="Click a row to see before / after values"
+        icon={ScrollText}
+        tone="saffron"
+        scroll={false}
+        bodyClassName="flex flex-col p-0"
+        action={data ? <Badge tone="plum">{total} total</Badge> : null}
+        footer={items.length ? (
+          <div className="flex items-center justify-between text-[13px]">
+            <span className="text-muted">{total} entries - page {page} of {pages}</span>
+            <div className="flex gap-2">
+              <Button size="sm" variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
+              <Button size="sm" variant="secondary" disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+            </div>
+          </div>
+        ) : null}
+      >
+        <form className="flex shrink-0 flex-wrap items-center gap-2 border-b border-line bg-paper/60 px-3 py-2" onSubmit={apply}>
+          <Input aria-label="Action" className={`${ADMIN_CTRL} !w-44`} placeholder="Action, e.g. user.update" value={draft.action} onChange={(e) => setDraft({ ...draft, action: e.target.value })} />
+          <Input aria-label="Actor" className={`${ADMIN_CTRL} !w-44`} placeholder="Actor name or id" value={draft.actor} onChange={(e) => setDraft({ ...draft, actor: e.target.value })} />
+          <Input aria-label="Entity" className={`${ADMIN_CTRL} !w-44`} placeholder="Entity, e.g. complaint" value={draft.entity} onChange={(e) => setDraft({ ...draft, entity: e.target.value })} />
+          <Button type="submit" variant="secondary" size="sm">Apply filters</Button>
+          <Button type="button" variant="ghost" size="sm" onClick={clear}>Clear</Button>
         </form>
-      </Card>
-      <Card>
-        {loading && !data ? <Spinner /> : error ? <ErrorState message={error} onRetry={reload} /> : !items.length ? <EmptyState title="No audit entries" hint="No entries match these filters." /> : (
-          <>
-            <Table>
-              <thead><tr><Th className="w-8" /><Th>When</Th><Th>Actor</Th><Th>Action</Th><Th>Entity</Th><Th>Reason</Th></tr></thead>
+        <Scroll>
+          {loading && !data ? <Spinner /> : error ? <ErrorState message={error} onRetry={reload} /> : !items.length ? <EmptyState title="No audit entries" hint="No entries match these filters." /> : (
+            <table className="w-full min-w-[760px] border-collapse text-left">
+              <thead><tr><HCell className="w-8" /><HCell>When</HCell><HCell>Actor</HCell><HCell>Action</HCell><HCell>Entity</HCell><HCell>Reason</HCell></tr></thead>
               <tbody>
                 {items.map((l, i) => {
                   const id = l.id ?? i
                   const isOpen = open === id
                   return (
                     <Fragment key={id}>
-                      <tr className="cursor-pointer hover:bg-paper" onClick={() => setOpen(isOpen ? null : id)}>
-                        <Td>{isOpen ? <ChevronDown className="h-4 w-4" aria-hidden /> : <ChevronRight className="h-4 w-4" aria-hidden />}</Td>
-                        <Td className="whitespace-nowrap text-muted">{fmtDateTime(l.created_at)}</Td>
-                        <Td><span className="font-medium">{l.actor_name || l.actor || l.actor_user_id || 'system'}</span> {l.actor_role && <RoleChip role={l.actor_role} />}</Td>
-                        <Td><Badge tone="plum">{l.action}</Badge></Td>
-                        <Td>{entityOf(l)}</Td>
-                        <Td className="max-w-[240px] truncate text-muted" title={l.reason || ''}>{l.reason || '-'}</Td>
+                      <tr className="cursor-pointer transition-colors hover:bg-paper" onClick={() => setOpen(isOpen ? null : id)}>
+                        <Cell>{isOpen ? <ChevronDown className="h-4 w-4" aria-hidden /> : <ChevronRight className="h-4 w-4" aria-hidden />}</Cell>
+                        <Cell className="whitespace-nowrap text-muted">{fmtDateTime(l.created_at)}</Cell>
+                        <Cell><span className="font-medium">{l.actor_name || l.actor || l.actor_user_id || 'system'}</span> {l.actor_role && <RoleChip role={l.actor_role} />}</Cell>
+                        <Cell><Badge tone="plum">{l.action}</Badge></Cell>
+                        <Cell>{entityOf(l)}</Cell>
+                        <Cell className="max-w-[240px] truncate text-muted" title={l.reason || ''}>{l.reason || '-'}</Cell>
                       </tr>
                       {isOpen && (
                         <tr><td colSpan={6} className="border-b border-line bg-paper px-4 py-3">
@@ -102,17 +119,10 @@ export default function AuditLogs() {
                   )
                 })}
               </tbody>
-            </Table>
-            <div className="flex items-center justify-between border-t border-line px-4 py-3 text-sm">
-              <span className="text-muted">{total} entries - page {page} of {pages}</span>
-              <div className="flex gap-2">
-                <Button size="sm" variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-                <Button size="sm" variant="secondary" disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>Next</Button>
-              </div>
-            </div>
-          </>
-        )}
-      </Card>
-    </div>
+            </table>
+          )}
+        </Scroll>
+      </Panel>
+    </Page>
   )
 }

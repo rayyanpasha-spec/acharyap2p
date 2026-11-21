@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet'
-import { ArrowLeft, Mic, MapPin, Building2, Eye, EyeOff, ImagePlus, RotateCcw, Heart, Award, Sparkles, Users, X } from 'lucide-react'
+import { ArrowLeft, Mic, MapPin, Building2, Eye, EyeOff, ImagePlus, RotateCcw, Heart, Award, Sparkles, Users, X, FileText, History, Megaphone, Gauge, CheckCircle2, Clock } from 'lucide-react'
 import '../../lib/leaflet'
 import { TILE_URL, TILE_ATTRIBUTION, dotIcon } from '../../lib/leaflet'
-import { AuthImage, Button, Card, CardBody, CardHeader, CategoryChip, DemoTag, EmptyState, ErrorState, Field, Modal, Notice, Spinner, Textarea, toast } from '../../components/ui'
+import { AuthImage, Button, CategoryChip, DemoTag, EmptyState, ErrorState, Field, IconTile, Modal, Page, Panel, Spinner, Textarea, toast } from '../../components/ui'
 import StatusTimeline, { TSeverityBadge, TStatusBadge } from '../../components/StatusTimeline'
 import { api, errMsg } from '../../lib/api'
 import { useMeta } from '../../store/meta'
@@ -12,6 +12,22 @@ import { LANGS, useT } from '../../lib/i18n'
 import { fmtDateTime } from '../../lib/format'
 
 const SEV_COLOR = { low: '#4f7a8f', medium: '#2f5f8f', high: '#c2603a', critical: '#b94a48' }
+
+function BackLink({ t }) {
+  return <Link to="/app/complaints" className="inline-flex h-8 items-center gap-1.5 rounded-[10px] border border-line-strong bg-surface px-3 text-[13px] font-semibold text-civic hover:bg-paper"><ArrowLeft className="h-4 w-4" aria-hidden />{t('nav.reports', 'My reports')}</Link>
+}
+
+function Fact({ icon, tone, label, children }) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <IconTile icon={icon} tone={tone} size="sm" />
+      <div className="min-w-0 flex-1 text-sm">
+        <p className="text-xs text-muted">{label}</p>
+        {children}
+      </div>
+    </div>
+  )
+}
 
 export default function ComplaintDetail() {
   const { ticketId } = useParams()
@@ -57,13 +73,12 @@ export default function ComplaintDetail() {
     setBusy(false)
   }
 
-  if (loading) return <Spinner />
+  if (loading) return <Page title={ticketId} actions={<BackLink t={t} />}><Panel className="flex-1"><Spinner /></Panel></Page>
   if (error || !c) {
     return (
-      <div>
-        <BackLink t={t} />
-        <Card><ErrorState message={error || 'Not found'} onRetry={() => load()} /></Card>
-      </div>
+      <Page title={ticketId} actions={<BackLink t={t} />}>
+        <Panel className="flex-1"><ErrorState message={error || 'Not found'} onRetry={() => load()} /></Panel>
+      </Page>
     )
   }
 
@@ -78,142 +93,138 @@ export default function ComplaintDetail() {
   const isTerminal = ['resolved', 'rejected', 'duplicate_linked'].includes(c.status)
   const catName = c.category_name || useMeta.getState().categoryName(c.category)
   const subName = c.subcategory_name || (c.subcategory ? useMeta.getState().subcategoryName(c.category, c.subcategory) : '')
+  const showActions = !c.is_mine || !isTerminal || canReopen
 
   return (
-    <div>
-      <BackLink t={t} />
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="font-display text-2xl font-extrabold tracking-tight sm:text-[28px]">{c.ticket_number}</h1>
-            {c.is_demo && <DemoTag />}
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <CategoryChip category={c.category} label={catName} />
-            {subName && <span className="rounded-md border border-line bg-surface px-2 py-0.5 text-xs font-medium text-muted">{subName}</span>}
-            <TStatusBadge status={c.status} />
-            <TSeverityBadge severity={c.severity} />
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {!c.is_mine && (
-            <Button variant={c.i_follow ? 'secondary' : 'civic'} onClick={toggleFollow} loading={busy}>
-              {c.i_follow ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
-              {c.i_follow ? t('btn.unfollow', 'Unfollow') : t('btn.follow', 'Follow')}
-            </Button>
-          )}
-          {!isTerminal && (
-            <Button variant="secondary" onClick={() => setEvOpen(true)}><ImagePlus className="h-4 w-4" aria-hidden />{t('btn.addEvidence', 'Add evidence')}</Button>
-          )}
-          {canReopen && (
-            <Button variant="secondary" onClick={() => setReopenOpen(true)}><RotateCcw className="h-4 w-4" aria-hidden />{t('btn.reopen', 'Request reopening')}</Button>
-          )}
-        </div>
-      </div>
-
+    <Page
+      title={<span className="inline-flex flex-wrap items-center gap-2">{c.ticket_number}{c.is_demo && <DemoTag />}</span>}
+      subtitle={
+        <span className="inline-flex flex-wrap items-center gap-1.5 align-middle">
+          <CategoryChip category={c.category} label={catName} />
+          {subName && <span className="rounded-md border border-line bg-surface px-2 py-0.5 text-xs font-medium text-muted">{subName}</span>}
+          <TStatusBadge status={c.status} />
+          <TSeverityBadge severity={c.severity} />
+        </span>
+      }
+      actions={<BackLink t={t} />}
+    >
       {resolved && (
-        <Notice tone="success" title={t('detail.thanksTitle', 'Resolved. Thank you.')} className="mb-5">
-          <p>{t('detail.thanks', 'Your voice helped make this neighbourhood better. A supervisor verified that this issue was resolved.')}</p>
-          <Link to="/app/certificates" className="mt-2 inline-flex items-center gap-1.5 font-semibold text-forest hover:underline"><Award className="h-4 w-4" aria-hidden />{t('detail.certLink', 'View your certificates')}</Link>
-        </Notice>
+        <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 rounded-[10px] border border-success/30 bg-success-100 px-3 py-1.5 text-[13px]">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-success" aria-hidden />
+          <p className="min-w-0 flex-1 text-ink/90"><span className="font-semibold">{t('detail.thanksTitle', 'Resolved. Thank you.')}</span> {t('detail.thanks', 'Your voice helped make this neighbourhood better. A supervisor verified that this issue was resolved.')}</p>
+          <Link to="/app/certificates" className="inline-flex items-center gap-1.5 font-semibold text-forest hover:underline"><Award className="h-4 w-4" aria-hidden />{t('detail.certLink', 'View your certificates')}</Link>
+        </div>
       )}
       {c.reopen_requested && (
-        <Notice tone="warning" className="mb-5">{t('detail.reopenPending', 'A reopening request is awaiting a supervisor decision.')}</Notice>
+        <div className="shrink-0 rounded-[10px] border border-warning/40 bg-warning-100 px-3 py-1.5 text-[13px] text-ink/90">{t('detail.reopenPending', 'A reopening request is awaiting a supervisor decision.')}</div>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
-        <div className="space-y-5">
-          <Card>
-            <CardHeader title={t('detail.report', 'The report')}
-              action={<span className="inline-flex items-center gap-1.5 text-xs text-muted">{c.submitted_via === 'voice' && <><Mic className="h-3.5 w-3.5 text-civic" aria-hidden />{t('detail.voice', 'Submitted by voice')} · </>}{langLabel}</span>} />
-            <CardBody>
-              {c.summary && <p className="mb-3 rounded-[10px] bg-civic-50 px-3 py-2 text-sm text-ink"><span className="mr-1.5 inline-flex items-center gap-1 font-semibold text-civic"><Sparkles className="h-3.5 w-3.5" aria-hidden />{t('detail.aiSummary', 'AI summary')}:</span>{c.summary}</p>}
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink" lang={c.original_language}>{c.original_description || '—'}</p>
-              {c.translated_description && c.original_language !== 'en' && (
-                <p className="mt-3 border-t border-line pt-3 text-sm text-muted"><span className="font-semibold text-ink/80">{t('detail.translation', 'English translation')}:</span> {c.translated_description}</p>
-              )}
-              <p className="mt-3 text-xs text-muted">{t('detail.submitted', 'Submitted')} {fmtDateTime(c.created_at)}{c.resolved_at ? ` · ${t('detail.resolvedAt', 'Resolved')} ${fmtDateTime(c.resolved_at)}` : ''}</p>
-            </CardBody>
-          </Card>
-
-          {images.length > 0 && (
-            <Card>
-              <CardHeader title={`${t('detail.photos', 'Photos')} (${images.length})`} />
-              <CardBody>
-                <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {images.map((im) => (
-                    <li key={im.id}>
-                      <button type="button" onClick={() => setPreview(im)} className="block w-full overflow-hidden rounded-[10px] border border-line" aria-label={`${t('detail.openPhoto', 'Open photo')} ${im.id}`}>
-                        <AuthImage imageId={im.id} alt={im.ai_observation || `${t('detail.photo', 'Photo')} ${im.id}`} className="aspect-[4/3] w-full" />
-                      </button>
-                      <p className="mt-1 text-[11px] uppercase tracking-wide text-muted">{im.kind}</p>
-                    </li>
-                  ))}
-                </ul>
-              </CardBody>
-            </Card>
+      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
+        {/* column 1: the report + photos */}
+        <Panel title={t('detail.report', 'The report')} icon={FileText} tone="forest"
+          action={<span className="inline-flex shrink-0 items-center gap-1.5 text-xs text-muted">{c.submitted_via === 'voice' && <><Mic className="h-3.5 w-3.5 text-civic" aria-hidden />{t('detail.voice', 'Submitted by voice')} · </>}{langLabel}</span>}>
+          {c.summary && <p className="mb-3 rounded-[10px] bg-civic-50 px-3 py-2 text-sm text-ink"><span className="mr-1.5 inline-flex items-center gap-1 font-semibold text-civic"><Sparkles className="h-3.5 w-3.5" aria-hidden />{t('detail.aiSummary', 'AI summary')}:</span>{c.summary}</p>}
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink" lang={c.original_language}>{c.original_description || '—'}</p>
+          {c.translated_description && c.original_language !== 'en' && (
+            <p className="mt-3 border-t border-line pt-3 text-sm text-muted"><span className="font-semibold text-ink/80">{t('detail.translation', 'English translation')}:</span> {c.translated_description}</p>
           )}
-
-          <Card>
-            <CardHeader title={t('timeline.title', 'Status timeline')} />
-            <CardBody><StatusTimeline rows={timeline} /></CardBody>
-          </Card>
-
-          {updates.length > 0 && (
-            <Card>
-              <CardHeader title={t('detail.updates', 'Updates from the department')} />
-              <ul className="divide-y divide-line">
-                {updates.map((u, i) => (
-                  <li key={u.id ?? i} className="px-4 py-3 sm:px-5">
-                    <p className="text-sm text-ink">{u.body}</p>
-                    <p className="mt-1 text-xs text-muted">{u.author_name ? `${u.author_name} · ` : ''}{fmtDateTime(u.created_at)}</p>
+          <p className="mt-3 text-xs text-muted">{t('detail.submitted', 'Submitted')} {fmtDateTime(c.created_at)}{c.resolved_at ? ` · ${t('detail.resolvedAt', 'Resolved')} ${fmtDateTime(c.resolved_at)}` : ''}</p>
+          {images.length > 0 && (
+            <div className="mt-4 border-t border-line pt-3">
+              <p className="mb-2 text-[13px] font-semibold text-ink">{`${t('detail.photos', 'Photos')} (${images.length})`}</p>
+              <ul className="grid grid-cols-3 gap-2">
+                {images.map((im) => (
+                  <li key={im.id}>
+                    <button type="button" onClick={() => setPreview(im)} className="block w-full overflow-hidden rounded-[10px] border border-line transition-shadow hover:shadow-[0_2px_8px_rgba(36,76,57,0.15)]" aria-label={`${t('detail.openPhoto', 'Open photo')} ${im.id}`}>
+                      <AuthImage imageId={im.id} alt={im.ai_observation || `${t('detail.photo', 'Photo')} ${im.id}`} className="aspect-[4/3] w-full" />
+                    </button>
+                    <p className="mt-0.5 text-[10px] uppercase tracking-wide text-muted">{im.kind}</p>
                   </li>
                 ))}
               </ul>
-            </Card>
+            </div>
+          )}
+        </Panel>
+
+        {/* column 2: timeline + department updates */}
+        <div className="flex min-h-0 flex-col gap-3">
+          <Panel title={t('timeline.title', 'Status timeline')} icon={History} tone="civic" className="lg:flex-1">
+            <StatusTimeline rows={timeline} />
+          </Panel>
+          {updates.length > 0 && (
+            <Panel title={t('detail.updates', 'Updates from the department')} icon={Megaphone} tone="teal" className="lg:max-h-[42%]" bodyClassName="p-0">
+              <ul className="divide-y divide-line">
+                {updates.map((u, i) => (
+                  <li key={u.id ?? i} className="px-4 py-2.5">
+                    <p className="text-sm text-ink">{u.body}</p>
+                    <p className="mt-0.5 text-xs text-muted">{u.author_name ? `${u.author_name} · ` : ''}{fmtDateTime(u.created_at)}</p>
+                  </li>
+                ))}
+              </ul>
+            </Panel>
           )}
         </div>
 
-        <div className="space-y-5">
-          <Card>
-            <CardHeader title={t('detail.assessment', 'Routing and severity')} />
-            <CardBody className="space-y-3 text-sm">
-              <div className="flex items-start gap-2"><Building2 className="mt-0.5 h-4 w-4 shrink-0 text-civic" aria-hidden />
-                <div><p className="text-xs text-muted">{t('detail.department', 'Department')}</p><p className="font-semibold">{c.department_name || meta?.departments?.find((d) => d.code === c.department_code)?.name || t('detail.pending', 'Being assigned')}</p></div>
-              </div>
-              <div>
-                <p className="text-xs text-muted">{t('detail.severity', 'Severity')}</p>
-                <div className="mt-1"><TSeverityBadge severity={c.severity} /></div>
-                {c.severity_reason && <p className="mt-1.5 text-ink/80">{c.severity_reason}</p>}
-                <p className="mt-1.5 text-xs text-muted">{t('detail.aiNote', 'Suggested by AI triage; an officer can confirm or change it.')}</p>
-              </div>
-              <div className="flex items-start gap-2 border-t border-line pt-3"><Users className="mt-0.5 h-4 w-4 shrink-0 text-forest" aria-hidden />
-                <p>{t('detail.supporting', 'Linked or supporting reports')}: <span className="font-semibold">{c.supporting_count ?? 0}</span>{c.followers_count > 0 && <span className="text-muted"> · {c.followers_count} {t('detail.followers', 'following')}</span>}</p>
-              </div>
-              {c.i_follow && <p className="flex items-center gap-1.5 text-xs font-semibold text-civic"><Heart className="h-3.5 w-3.5" aria-hidden />{t('detail.youFollow', 'You are following this report')}</p>}
-            </CardBody>
-          </Card>
-
-          <Card>
-            <CardHeader title={t('detail.location', 'Approximate location')} />
+        {/* column 3: map + facts */}
+        <div className="flex min-h-0 flex-col gap-3">
+          <Panel title={t('detail.location', 'Approximate location')} icon={MapPin} tone="forest" className="shrink-0" scroll={false} bodyClassName="p-3">
             {hasLoc ? (
-              <div className="p-3">
-                <div className="h-56 overflow-hidden rounded-[10px] border border-line">
+              <>
+                <div className="h-40 overflow-hidden rounded-[10px] border border-line">
                   <MapContainer center={[loc.latitude, loc.longitude]} zoom={16} scrollWheelZoom={false} className="h-full w-full" attributionControl>
                     <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} />
                     <Circle center={[loc.latitude, loc.longitude]} radius={60} pathOptions={{ color: SEV_COLOR[c.severity] || '#244c39', weight: 1, fillOpacity: 0.12 }} />
                     <Marker position={[loc.latitude, loc.longitude]} icon={dotIcon(SEV_COLOR[c.severity] || '#244c39', 16)} />
                   </MapContainer>
                 </div>
-                <p className="mt-2 flex items-start gap-1.5 text-sm"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-forest" aria-hidden />
+                <p className="mt-2 flex items-start gap-1.5 text-[13px]"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-forest" aria-hidden />
                   <span>{loc.locality || loc.address || 'Bengaluru'}{loc.ward_code ? ` · ${loc.ward_code}` : ''}</span></p>
-                {!c.is_mine && <p className="mt-1 text-xs text-muted">{t('detail.privacy', 'Position is rounded for privacy.')}</p>}
-                {loc.service_area_status === 'needs_manual_routing' && <p className="mt-1 text-xs text-muted">{t('detail.manual', 'Official ward boundaries are not imported, so an officer routes this manually.')}</p>}
-              </div>
+                {!c.is_mine && <p className="mt-0.5 text-xs text-muted">{t('detail.privacy', 'Position is rounded for privacy.')}</p>}
+                {loc.service_area_status === 'needs_manual_routing' && <p className="mt-0.5 text-xs text-muted">{t('detail.manual', 'Official ward boundaries are not imported, so an officer routes this manually.')}</p>}
+              </>
             ) : <EmptyState title={t('detail.noLoc', 'No location available')} />}
-          </Card>
+          </Panel>
+
+          <Panel title={t('detail.assessment', 'Routing and severity')} icon={Gauge} tone="saffron" className="lg:flex-1" bodyClassName="space-y-3 p-4">
+            <Fact icon={Building2} tone="civic" label={t('detail.department', 'Department')}>
+              <p className="font-semibold">{c.department_name || meta?.departments?.find((d) => d.code === c.department_code)?.name || t('detail.pending', 'Being assigned')}</p>
+            </Fact>
+            <Fact icon={Gauge} tone="saffron" label={t('detail.severity', 'Severity')}>
+              <div className="mt-0.5"><TSeverityBadge severity={c.severity} /></div>
+              {c.severity_reason && <p className="mt-1 text-ink/80">{c.severity_reason}</p>}
+              <p className="mt-1 text-xs text-muted">{t('detail.aiNote', 'Suggested by AI triage; an officer can confirm or change it.')}</p>
+            </Fact>
+            <Fact icon={Users} tone="forest" label={t('detail.supporting', 'Linked or supporting reports')}>
+              <p className="font-semibold">{c.supporting_count ?? 0}{c.followers_count > 0 && <span className="font-normal text-muted"> · {c.followers_count} {t('detail.followers', 'following')}</span>}</p>
+            </Fact>
+          </Panel>
         </div>
       </div>
+
+      {/* fixed actions strip */}
+      {showActions && (
+        <div className="sticky bottom-0 z-10 flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-[14px] border border-line bg-surface px-3 py-2 shadow-[0_1px_2px_rgba(36,76,57,0.05)] lg:static">
+          <p className="flex items-center gap-1.5 text-[13px] text-muted">
+            {c.i_follow
+              ? <><Heart className="h-4 w-4 text-civic" aria-hidden /><span className="font-semibold text-civic">{t('detail.youFollow', 'You are following this report')}</span></>
+              : <><Clock className="h-4 w-4" aria-hidden />{c.is_mine ? t('detail.yours', 'This is your report.') : t('detail.followHint', 'Follow this report to get updates.')}</>}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {!c.is_mine && (
+              <Button size="sm" variant={c.i_follow ? 'secondary' : 'civic'} onClick={toggleFollow} loading={busy}>
+                {c.i_follow ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
+                {c.i_follow ? t('btn.unfollow', 'Unfollow') : t('btn.follow', 'Follow')}
+              </Button>
+            )}
+            {!isTerminal && (
+              <Button size="sm" variant="secondary" onClick={() => setEvOpen(true)}><ImagePlus className="h-4 w-4" aria-hidden />{t('btn.addEvidence', 'Add evidence')}</Button>
+            )}
+            {canReopen && (
+              <Button size="sm" variant="secondary" onClick={() => setReopenOpen(true)}><RotateCcw className="h-4 w-4" aria-hidden />{t('btn.reopen', 'Request reopening')}</Button>
+            )}
+          </div>
+        </div>
+      )}
 
       <EvidenceModal open={evOpen} onClose={() => setEvOpen(false)} ticketId={ticketId} t={t} max={meta?.limits?.max_images_per_report || 4} onDone={() => { setEvOpen(false); load(true) }} />
       <ReopenModal open={reopenOpen} onClose={() => setReopenOpen(false)} ticketId={ticketId} t={t} onDone={() => { setReopenOpen(false); load(true) }} />
@@ -221,12 +232,8 @@ export default function ComplaintDetail() {
         {preview && <AuthImage imageId={preview.id} alt={preview.ai_observation || ''} className="max-h-[70vh] w-full rounded-[10px] !object-contain" />}
         {preview?.ai_observation && <p className="mt-2 text-sm text-muted">{preview.ai_observation}</p>}
       </Modal>
-    </div>
+    </Page>
   )
-}
-
-function BackLink({ t }) {
-  return <Link to="/app/complaints" className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-civic hover:underline"><ArrowLeft className="h-4 w-4" aria-hidden />{t('nav.reports', 'My reports')}</Link>
 }
 
 function EvidenceModal({ open, onClose, ticketId, onDone, t, max }) {

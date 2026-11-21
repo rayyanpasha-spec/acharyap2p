@@ -1,8 +1,8 @@
 // Ticket action panels (right column of the ticket detail) + reusable evidence/status forms (also used by worker tasks).
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowRight, ChevronDown, ChevronUp } from 'lucide-react'
+import { Activity, ArrowRight, Camera, ChevronDown, Link2, MessageSquare, RotateCcw, Send, ShieldCheck, Tags, UserCog } from 'lucide-react'
 import { api, errMsg } from '../../lib/api'
-import { Button, Field, Input, Notice, Select, Textarea, cn, toast } from '../../components/ui'
+import { Button, Field, IconTile, Input, Notice, Select, Textarea, cn, toast } from '../../components/ui'
 import { titleCase } from '../../lib/format'
 import { useMeta } from '../../store/meta'
 import { SEVERITIES, useFetch } from './common'
@@ -39,20 +39,19 @@ export function useAction(onDone) {
   return { busy, run }
 }
 
-/* ---------- Panel shell ---------- */
-export function Panel({ title, hint, defaultOpen = false, accent = 'civic', children }) {
-  const [open, setOpen] = useState(defaultOpen)
-  const bar = { civic: 'border-l-civic', forest: 'border-l-forest', teal: 'border-l-teal', saffron: 'border-l-saffron', plum: 'border-l-plum' }[accent]
+/* ---------- Accordion section (controlled by ActionColumn so only ONE action form is open at a time) ---------- */
+export function ActionSection({ title, hint, icon, tone = 'civic', open, onToggle, children }) {
   return (
-    <section className={cn('rounded-[10px] border border-line border-l-4 bg-surface', bar)}>
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left">
-        <span>
-          <span className="block font-display text-[14px] font-bold text-ink">{title}</span>
-          {hint && <span className="block text-xs text-muted">{hint}</span>}
+    <section className={cn('overflow-hidden rounded-[12px] border bg-surface transition-colors', open ? 'border-line-strong' : 'border-line')}>
+      <button type="button" onClick={onToggle} aria-expanded={open} className={cn('flex w-full items-center gap-2.5 px-3 py-2 text-left', open ? 'bg-paper' : 'hover:bg-paper')}>
+        <IconTile icon={icon} tone={tone} size="sm" />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-display text-[13px] font-bold text-ink">{title}</span>
+          {hint && <span className="block truncate text-[11.5px] text-muted">{hint}</span>}
         </span>
-        {open ? <ChevronUp className="h-4 w-4 shrink-0 text-muted" aria-hidden /> : <ChevronDown className="h-4 w-4 shrink-0 text-muted" aria-hidden />}
+        <ChevronDown className={cn('h-4 w-4 shrink-0 text-muted transition-transform', open && 'rotate-180')} aria-hidden />
       </button>
-      {open && <div className="space-y-3 border-t border-line px-4 py-3">{children}</div>}
+      {open && <div className="space-y-3 border-t border-line px-3 py-3">{children}</div>}
     </section>
   )
 }
@@ -370,7 +369,7 @@ export function DuplicatePanel({ ticket, onDone }) {
   )
 }
 
-/** The whole right-hand column, gated by `can` and `allowed_transitions`. */
+/** The whole action column, gated by `can` and `allowed_transitions`. One accordion section open at a time. */
 export function ActionColumn({ ticket, detail, onDone }) {
   const can = detail?.can || {}
   const transitions = detail?.allowed_transitions || []
@@ -378,22 +377,36 @@ export function ActionColumn({ ticket, detail, onDone }) {
   const canEvidence = can.status || can.assign || can.verify || can.classify
   const any = can.classify || can.assign || can.status || can.note || can.verify || (can.reopen_decision && ticket.reopen_requested)
 
+  const sections = []
+  if (can.reopen_decision && ticket.reopen_requested) sections.push({ key: 'reopen', title: 'Reopen decision', hint: 'Citizen requested reopening', icon: RotateCcw, tone: 'saffron', body: <ReopenPanel ticket={ticket} onDone={onDone} /> })
+  if (can.verify) sections.push({ key: 'verify', title: 'Verify resolution', hint: 'Supervisor / admin only', icon: ShieldCheck, tone: 'forest', body: <VerifyPanel ticket={ticket} onDone={onDone} /> })
+  if (can.classify) sections.push({ key: 'classify', title: 'Confirm or correct classification', hint: 'Reason required; logged to audit', icon: Tags, tone: 'civic', body: <ClassifyPanel ticket={ticket} detail={detail} onDone={onDone} /> })
+  if (can.assign) sections.push({ key: 'assign', title: 'Assign', hint: 'Department and field worker', icon: UserCog, tone: 'teal', body: <AssignPanel ticket={ticket} onDone={onDone} /> })
+  if (can.status) sections.push({ key: 'status', title: 'Update status', hint: 'Allowed transitions only', icon: Activity, tone: 'civic', body: <StatusPanel ticket={ticket} detail={detail} onDone={onDone} /> })
+  if (can.status && transitions.includes('awaiting_verification')) sections.push({ key: 'handover', title: 'Send for supervisor verification', hint: 'Work is done and evidence is attached', icon: Send, tone: 'forest', body: <HandoverForm ticketNumber={ticket.ticket_number} hasAfter={hasAfter} onDone={onDone} /> })
+  if (can.note) sections.push({ key: 'note', title: 'Add note', hint: 'Public update or internal note', icon: MessageSquare, tone: 'saffron', body: <NotePanel ticket={ticket} onDone={onDone} /> })
+  if (canEvidence) sections.push({ key: 'evidence', title: 'Upload resolution evidence', hint: 'Before / after photos', icon: Camera, tone: 'forest', body: <EvidenceForm ticketNumber={ticket.ticket_number} onDone={onDone} /> })
+  if (can.classify) sections.push({ key: 'duplicate', title: 'Link duplicate', hint: 'Merge into a primary ticket', icon: Link2, tone: 'plum', body: <DuplicatePanel ticket={ticket} onDone={onDone} /> })
+
+  // Same "which one should be open first" rules as before: reopen, verify (when awaiting), classify (when unconfirmed), then status.
+  const initial = (() => {
+    if (can.reopen_decision && ticket.reopen_requested) return 'reopen'
+    if (can.verify && ticket.status === 'awaiting_verification') return 'verify'
+    if (can.classify && !ticket.classification_confirmed) return 'classify'
+    if (can.status) return 'status'
+    return sections[0]?.key
+  })()
+  const [chosen, setChosen] = useState(undefined) // undefined = use the default; null = everything closed
+  const active = chosen === null ? null : (sections.some((x) => x.key === chosen) ? chosen : initial)
+
   if (!any) return <Notice tone="civic">You have read-only access to this ticket.</Notice>
   return (
-    <div className="space-y-3">
-      {can.reopen_decision && ticket.reopen_requested && (
-        <Panel title="Reopen decision" hint="Citizen requested reopening" accent="saffron" defaultOpen><ReopenPanel ticket={ticket} onDone={onDone} /></Panel>
-      )}
-      {can.verify && <Panel title="Verify resolution" hint="Supervisor / admin only" accent="forest" defaultOpen={ticket.status === 'awaiting_verification'}><VerifyPanel ticket={ticket} onDone={onDone} /></Panel>}
-      {can.classify && <Panel title="Confirm or correct classification" hint="Reason required; logged to audit" accent="civic" defaultOpen={!ticket.classification_confirmed}><ClassifyPanel ticket={ticket} detail={detail} onDone={onDone} /></Panel>}
-      {can.assign && <Panel title="Assign" hint="Department and field worker" accent="civic"><AssignPanel ticket={ticket} onDone={onDone} /></Panel>}
-      {can.status && <Panel title="Update status" hint="Allowed transitions only" accent="civic" defaultOpen={!can.classify}><StatusPanel ticket={ticket} detail={detail} onDone={onDone} /></Panel>}
-      {can.status && transitions.includes('awaiting_verification') && (
-        <Panel title="Send for supervisor verification" hint="Work is done and evidence is attached" accent="forest"><HandoverForm ticketNumber={ticket.ticket_number} hasAfter={hasAfter} onDone={onDone} /></Panel>
-      )}
-      {can.note && <Panel title="Add note" hint="Public update or internal note" accent="saffron"><NotePanel ticket={ticket} onDone={onDone} /></Panel>}
-      {canEvidence && <Panel title="Upload resolution evidence" hint="Before / after photos" accent="forest"><EvidenceForm ticketNumber={ticket.ticket_number} onDone={onDone} /></Panel>}
-      {can.classify && <Panel title="Link duplicate" hint="Merge into a primary ticket" accent="plum"><DuplicatePanel ticket={ticket} onDone={onDone} /></Panel>}
+    <div className="space-y-2">
+      {sections.map((sec) => (
+        <ActionSection key={sec.key} title={sec.title} hint={sec.hint} icon={sec.icon} tone={sec.tone} open={active === sec.key} onToggle={() => setChosen(active === sec.key ? null : sec.key)}>
+          {sec.body}
+        </ActionSection>
+      ))}
     </div>
   )
 }

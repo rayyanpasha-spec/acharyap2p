@@ -48,34 +48,34 @@ export default function CertificateCard({ cert }) {
   }
 
   return (
-    <article className="overflow-hidden rounded-[10px] border border-line bg-surface" aria-label={`Certificate ${cert.code}`}>
-      <div className="m-3 rounded-[8px] border-2 border-double border-forest/40 bg-paper px-4 py-6 text-center sm:px-8">
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-saffron">CivicLens &middot; Bengaluru, Karnataka pilot</p>
-        <h3 className="mt-2 font-display text-2xl font-extrabold text-forest">Certificate of Appreciation</h3>
-        <p className="mt-3 text-sm text-muted">presented to</p>
-        <p className="font-display text-xl font-bold text-ink">{cert.display_name || 'Citizen'}</p>
-        {cert.contribution && <p className="mx-auto mt-3 max-w-md text-sm text-ink">{cert.contribution}</p>}
-        <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-1 text-xs text-muted sm:grid-cols-3">
+    <article className="flex flex-col overflow-hidden rounded-[14px] border border-line bg-surface shadow-[0_1px_2px_rgba(36,76,57,0.05)]" aria-label={`Certificate ${cert.code}`}>
+      <div className="m-2.5 rounded-[10px] border-2 border-double border-forest/40 bg-paper px-4 py-4 text-center">
+        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-saffron">CivicLens &middot; Bengaluru, Karnataka pilot</p>
+        <h3 className="mt-1.5 font-display text-xl font-extrabold text-forest">Certificate of Appreciation</h3>
+        <p className="mt-2 text-xs text-muted">presented to</p>
+        <p className="font-display text-lg font-bold text-ink">{cert.display_name || 'Citizen'}</p>
+        {cert.contribution && <p className="mx-auto mt-2 max-w-md text-[13px] text-ink">{cert.contribution}</p>}
+        <dl className="mt-3 grid grid-cols-1 gap-x-4 gap-y-0.5 text-xs text-muted sm:grid-cols-3">
           <div><dt className="inline">Ticket: </dt><dd className="inline font-semibold text-ink">{cert.ticket_number || '-'}</dd></div>
           <div><dt className="inline">Issued: </dt><dd className="inline font-semibold text-ink">{fmtDate(cert.issued_at)}</dd></div>
-          <div><dt className="inline">Certificate ID: </dt><dd className="inline font-mono font-semibold text-ink">{cert.code}</dd></div>
+          <div className="min-w-0 truncate"><dt className="inline">ID: </dt><dd className="inline font-mono font-semibold text-ink">{cert.code}</dd></div>
         </dl>
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+        <div className="mt-2.5 flex flex-wrap items-center justify-center gap-2">
           {cert.revoked ? <Badge tone="critical">Revoked</Badge> : <Badge tone="success"><BadgeCheck className="h-3 w-3" aria-hidden /> Verifiable</Badge>}
           {cert.is_demo && <DemoTag />}
         </div>
       </div>
 
-      <div className="space-y-3 border-t border-line px-4 py-3 sm:px-5">
-        <p className="break-all text-xs text-muted">Verification link: <a href={url} className="font-medium text-civic hover:underline">{url}</a></p>
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={download} loading={busy} disabled={cert.revoked}><Download className="h-4 w-4" aria-hidden /> Download PDF</Button>
-          <Button variant="secondary" onClick={copy}><Copy className="h-4 w-4" aria-hidden /> Copy verification link</Button>
+      <div className="space-y-2 border-t border-line px-3 py-2.5">
+        <p className="truncate text-xs text-muted" title={url}>Verification link: <a href={url} className="font-medium text-civic hover:underline">{url}</a></p>
+        <div className="flex flex-wrap gap-1.5">
+          <Button size="sm" onClick={download} loading={busy} disabled={cert.revoked}><Download className="h-4 w-4" aria-hidden /> Download PDF</Button>
+          <Button size="sm" variant="secondary" onClick={copy}><Copy className="h-4 w-4" aria-hidden /> Copy link</Button>
           {typeof navigator !== 'undefined' && navigator.share && (
-            <Button variant="secondary" onClick={share}><Share2 className="h-4 w-4" aria-hidden /> Share</Button>
+            <Button size="sm" variant="secondary" onClick={share}><Share2 className="h-4 w-4" aria-hidden /> Share</Button>
           )}
           {cert.ticket_number && (
-            <Link to={`/app/complaints/${cert.ticket_number}`} className="inline-flex h-10 items-center gap-2 rounded-[10px] px-4 text-sm font-semibold text-civic hover:bg-civic-50">
+            <Link to={`/app/complaints/${cert.ticket_number}`} className="inline-flex h-8 items-center gap-1.5 rounded-[10px] px-3 text-sm font-semibold text-civic hover:bg-civic-50">
               <ExternalLink className="h-4 w-4" aria-hidden /> View ticket
             </Link>
           )}

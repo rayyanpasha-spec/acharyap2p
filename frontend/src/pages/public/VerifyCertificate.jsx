@@ -1,9 +1,9 @@
 // Public certificate verification (no login). Shows only what the API returns.
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { BadgeCheck, ShieldQuestion } from 'lucide-react'
+import { BadgeCheck, ShieldQuestion, ArrowLeft } from 'lucide-react'
 import { api, errMsg } from '../../lib/api'
-import { Badge, Button, Card, CardBody, DemoTag, ErrorState, Spinner } from '../../components/ui'
+import { Badge, Button, Card, CardBody, DemoTag, ErrorState, IconTile, Spinner } from '../../components/ui'
 import { fmtDate } from '../../lib/format'
 
 function Row({ label, children }) {
@@ -34,9 +34,14 @@ export default function VerifyCertificate() {
   const { phase, data } = state
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8 sm:py-12">
-      <h1 className="font-display text-2xl font-extrabold text-ink sm:text-[28px]">Certificate verification</h1>
-      <p className="mt-1 text-sm text-muted">Check that a CivicLens Certificate of Appreciation is genuine.</p>
+    <div className="mx-auto max-w-2xl px-4 py-8 sm:py-10">
+      <div className="flex items-center gap-3">
+        <IconTile icon={BadgeCheck} tone="forest" size="lg" />
+        <div>
+          <h1 className="font-display text-2xl font-extrabold text-forest sm:text-[28px]">Certificate verification</h1>
+          <p className="mt-0.5 text-sm text-muted">Check that a CivicLens Certificate of Appreciation is genuine.</p>
+        </div>
+      </div>
 
       <div className="mt-5">
         {phase === 'loading' && <Card><Spinner label="Checking certificate…" /></Card>}
@@ -46,7 +51,7 @@ export default function VerifyCertificate() {
         {phase === 'invalid' && (
           <Card>
             <CardBody className="flex flex-col items-center gap-2 py-8 text-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-paper text-muted"><ShieldQuestion className="h-6 w-6" aria-hidden /></span>
+              <IconTile icon={ShieldQuestion} tone="saffron" size="lg" />
               <h2 className="font-display text-lg font-bold text-ink">We could not verify this certificate</h2>
               <p className="max-w-md text-sm text-muted">
                 No valid certificate matches the ID <span className="font-mono text-ink">{code}</span>. Please check the link or ID and try again. If you believe this is a mistake, contact the person who shared it with you.
@@ -81,7 +86,7 @@ export default function VerifyCertificate() {
       </div>
 
       <p className="mt-4 text-xs text-muted">This page shows only approved details: no email, phone number or exact location is ever displayed.</p>
-      <Link to="/" className="mt-3 inline-block text-sm font-semibold text-civic hover:underline">Back to CivicLens</Link>
+      <Link to="/" className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-civic hover:underline"><ArrowLeft className="h-4 w-4" aria-hidden />Back to CivicLens</Link>
     </div>
   )
 }

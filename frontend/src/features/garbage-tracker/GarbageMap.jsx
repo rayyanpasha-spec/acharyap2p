@@ -109,14 +109,14 @@ const BinMarker = memo(function BinMarker({ b, selected, onSelect, showReport })
   )
 })
 
-export default function GarbageMap({ vehicles = [], bins = [], routes = [], selectedVehicleId, selectedBinId, onSelectVehicle, onSelectBin, showReport = false, staff = false, focus, className = '' }) {
+export default function GarbageMap({ vehicles = [], bins = [], routes = [], selectedVehicleId, selectedBinId, onSelectVehicle, onSelectBin, showReport = false, staff = false, focus, className = '', fill = false }) {
   const meta = useMeta((s) => s.meta)
   const center = meta?.map?.center?.length === 2 ? meta.map.center : DEFAULT_CENTER
   const zoom = DEFAULT_ZOOM
   const lines = useMemo(() => routes.map((r) => ({ id: r.id, name: r.name, pts: (r.waypoints || []).filter((p) => Array.isArray(p) && Number.isFinite(Number(p[0])) && Number.isFinite(Number(p[1]))) })).filter((r) => r.pts.length > 1), [routes])
 
   return (
-    <div className={`relative h-[60vh] min-h-[360px] overflow-hidden rounded-[10px] border border-line ${className}`}>
+    <div className={fill ? `absolute inset-0 overflow-hidden ${className}` : `relative h-[60vh] min-h-[360px] overflow-hidden rounded-[10px] border border-line ${className}`}>
       <style>{MAP_CSS}</style>
       <MapContainer center={center} zoom={zoom} scrollWheelZoom className="h-full w-full">
         <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} />

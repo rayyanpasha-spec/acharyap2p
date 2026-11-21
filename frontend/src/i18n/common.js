@@ -228,4 +228,36 @@ const ml = {
   'footer.pilot': 'ബെംഗളൂരു, കർണാടക പൈലറ്റ്',
 }
 
+/* ---- Public site (landing + auth) keys: English only, other languages fall back to English ---- */
+Object.assign(en, {
+  'pub.snapshot': 'Live snapshot',
+  'pub.active': 'Active issues',
+  'pub.critical': 'Critical',
+  'pub.vehicles': 'Vehicles',
+  'pub.bins': 'Bins',
+  'pub.demoData': 'Demo data',
+  'pub.simGps': 'Simulated GPS',
+  'pub.openMap': 'Open City in Motion',
+  'pub.photoCredit': 'Vidhana Soudha, Bengaluru',
+  'pub.or': 'or',
+  'pub.welcome': 'Welcome to CivicLens',
+  'pub.signingIn': 'Signing you in...',
+  'pub.googleFailed': 'Google sign-in failed. Please try again.',
+  'pub.googleBlocked': 'Google sign-in could not be loaded - check your connection or ad blocker',
+  'pub.googleNote': 'Google sign-in creates a citizen account. Staff accounts are issued by an administrator.',
+  'pub.authBack': 'Back to home',
+  'pub.loginLead': 'Welcome back to the city view.',
+  'pub.registerLead': 'Join the people moving Bengaluru forward.',
+  'pub.b1': 'Report in Kannada, English, Hindi, Tamil, Telugu or Malayalam',
+  'pub.b2': 'AI-assisted triage, routed to the right department',
+  'pub.b3': 'Track every ticket until the fix is verified',
+  'pub.demoToggle': 'Try a demo account',
+  'pub.fill': 'Use',
+  'pub.noAccount': 'New to CivicLens?',
+  'pub.forgotNote': 'Staff sign in with the account issued by an administrator.',
+  'pub.footerNote': 'Prototype: demo data and simulated CleanRoute GPS are labelled.',
+  'pub.features': 'What CivicLens does',
+  'pub.catsRoute': 'Where each report goes',
+})
+
 export default { en, kn, hi, ta, te, ml }

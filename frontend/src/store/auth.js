@@ -35,6 +35,14 @@ export const useAuth = create((set, get) => ({
     return data.user
   },
 
+  /** Google sign-in AND sign-up: `credential` is the ID token from Google Identity Services. Returns {user, is_new}. */
+  async googleSignIn(credential, preferred_language) {
+    const { data } = await api.post('/auth/google', { credential, preferred_language })
+    tokenStore.set({ access_token: data.access_token, refresh_token: data.refresh_token, user: data.user })
+    set({ user: data.user })
+    return { user: data.user, is_new: !!data.is_new }
+  },
+
   setUser(user) {
     const t = tokenStore.get()
     if (t) tokenStore.set({ ...t, user })

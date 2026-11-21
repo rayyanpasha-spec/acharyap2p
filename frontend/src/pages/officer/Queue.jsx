@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react'
-import { Button, Card, EmptyState, ErrorState, PageHeader, Spinner } from '../../components/ui'
+import { ChevronLeft, ChevronRight, ListChecks, RefreshCw } from 'lucide-react'
+import { Badge, Button, EmptyState, ErrorState, Page, Panel, Spinner } from '../../components/ui'
 import { useMeta } from '../../store/meta'
 import { useAuth } from '../../store/auth'
 import FilterBar from '../../features/staff/FilterBar'
@@ -40,36 +40,42 @@ export default function Queue() {
   const items = data?.items || []
   const total = data?.total ?? 0
   const pages = Math.max(1, Math.ceil(total / (data?.page_size || PAGE_SIZE)))
+  const hasRows = !!data && items.length > 0
 
   return (
-    <div>
-      <PageHeader
-        title={role === 'worker' ? 'My assigned tickets' : 'Priority queue'}
-        subtitle="Sorted by operational priority, then SLA risk and age. Priority never changes the AI severity label."
-        actions={<Button variant="secondary" size="sm" onClick={reload}><RefreshCw className="h-4 w-4" aria-hidden /> Refresh</Button>}
-      />
-      <div className="space-y-3">
-        <FilterBar params={params} onPatch={patch} onReset={reset} meta={meta} />
-        <Card className="overflow-hidden">
-          {loading && !data ? <Spinner label="Loading the queue…" /> : error ? (
-            <ErrorState message={error} onRetry={reload} />
-          ) : items.length === 0 ? (
-            <EmptyState title="No tickets match these filters" hint="Try clearing a filter or widening the date range." action={<Button variant="secondary" size="sm" onClick={reset}>Clear filters</Button>} />
-          ) : (
-            <TicketTable items={items} />
-          )}
-          {data && items.length > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-paper px-4 py-2.5 text-sm text-muted">
-              <span aria-live="polite">{loading ? 'Updating…' : `${(page - 1) * PAGE_SIZE + 1}-${(page - 1) * PAGE_SIZE + items.length} of ${total} tickets`}</span>
-              <div className="flex items-center gap-2">
-                <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => goPage(page - 1)}><ChevronLeft className="h-4 w-4" aria-hidden /> Previous</Button>
-                <span className="tabular-nums">Page {page} / {pages}</span>
-                <Button variant="secondary" size="sm" disabled={page >= pages} onClick={() => goPage(page + 1)}>Next <ChevronRight className="h-4 w-4" aria-hidden /></Button>
-              </div>
+    <Page
+      title={role === 'worker' ? 'My assigned tickets' : 'Priority queue'}
+      subtitle="Sorted by operational priority, then SLA risk and age. Priority never changes the AI severity label."
+      actions={<Button variant="secondary" size="sm" onClick={reload}><RefreshCw className="h-4 w-4" aria-hidden /> Refresh</Button>}
+    >
+      <FilterBar params={params} onPatch={patch} onReset={reset} meta={meta} />
+      <Panel
+        className="flex-1"
+        title="Tickets"
+        subtitle="Click a row to open the ticket"
+        icon={ListChecks}
+        tone="teal"
+        action={data ? <Badge tone="teal">{total} match{total === 1 ? '' : 'es'}</Badge> : null}
+        bodyClassName="overflow-x-auto p-0"
+        footer={hasRows ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 text-[13px] text-muted">
+            <span aria-live="polite">{loading ? 'Updating…' : `${(page - 1) * PAGE_SIZE + 1}-${(page - 1) * PAGE_SIZE + items.length} of ${total} tickets`}</span>
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => goPage(page - 1)}><ChevronLeft className="h-4 w-4" aria-hidden /> Previous</Button>
+              <span className="tabular-nums">Page {page} / {pages}</span>
+              <Button variant="secondary" size="sm" disabled={page >= pages} onClick={() => goPage(page + 1)}>Next <ChevronRight className="h-4 w-4" aria-hidden /></Button>
             </div>
-          )}
-        </Card>
-      </div>
-    </div>
+          </div>
+        ) : null}
+      >
+        {loading && !data ? <Spinner label="Loading the queue…" /> : error ? (
+          <ErrorState message={error} onRetry={reload} />
+        ) : items.length === 0 ? (
+          <EmptyState title="No tickets match these filters" hint="Try clearing a filter or widening the date range." action={<Button variant="secondary" size="sm" onClick={reset}>Clear filters</Button>} />
+        ) : (
+          <TicketTable items={items} />
+        )}
+      </Panel>
+    </Page>
   )
 }

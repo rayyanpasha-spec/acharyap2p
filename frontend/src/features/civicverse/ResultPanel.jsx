@@ -14,7 +14,7 @@ export default function ResultPanel({ result, labels = {}, onPlayAgain, gameTitl
       <Card className="border-forest/30">
         <CardBody className="text-center">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">{gameTitle || 'Result'}</p>
-          <p className="mt-2 font-display text-5xl font-extrabold text-forest" aria-label={`Score ${result.score} out of ${result.max_score}`}>
+          <p className="mt-2 font-display text-4xl font-extrabold text-forest" aria-label={`Score ${result.score} out of ${result.max_score}`}>
             {result.score ?? '-'}<span className="text-2xl text-muted"> / {result.max_score ?? '-'}</span>
           </p>
           <p className="mt-1 text-sm text-ink">{result.correct ?? '-'} correct out of {result.total ?? '-'}</p>

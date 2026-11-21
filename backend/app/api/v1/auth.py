@@ -1,3 +1,4 @@
+import secrets
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -6,6 +7,7 @@ from pydantic import BaseModel, EmailStr, Field
 from app.config import settings
 from app.core.constants import LANGUAGES, ROLE_CITIZEN
 from app.core.deps import CurrentUser, get_current_user
+from app.core.google_auth import GoogleAuthError, verify_google_id_token
 from app.core.rate_limit import rate_limit
 from app.core.security import (create_access_token, create_refresh_token, decode_token, hash_password,
                                verify_password)
@@ -60,6 +62,46 @@ def register(body: RegisterIn):
     except DuplicateEmailError:
         raise HTTPException(status.HTTP_409_CONFLICT, "An account with this email already exists")
     return _token_response(u)
+
+
+class GoogleIn(BaseModel):
+    credential: str = Field(min_length=20, max_length=8192)
+    preferred_language: str | None = None
+
+
+@router.get("/config")
+def auth_config():
+    """Public client configuration for the sign-in screen (the Google client id is public by design)."""
+    return {"google_enabled": bool(settings.GOOGLE_CLIENT_ID), "google_client_id": settings.GOOGLE_CLIENT_ID or None}
+
+
+@router.post("/google", dependencies=[Depends(rate_limit("google", 30, 300))])
+def google_sign_in(body: GoogleIn):
+    """Google sign-in AND sign-up in one call. An existing account with the same verified email is signed in (any role);
+    otherwise a new CITIZEN account is created. Staff roles can never be created through this endpoint."""
+    try:
+        ident = verify_google_id_token(body.credential)
+    except GoogleAuthError as exc:
+        raise HTTPException(exc.status, str(exc))
+    store = get_user_store()
+    u = store.get_by_email(ident.email)
+    is_new = False
+    if u is None:
+        lang = body.preferred_language if body.preferred_language in LANGUAGES else "en"
+        name = (ident.name or ident.email.split("@")[0]).strip()[:120] or "Citizen"
+        try:
+            # random, unusable password: this account signs in with Google (password login stays impossible)
+            u = create_user_checked(email=ident.email, password_hash=hash_password(secrets.token_urlsafe(32)),
+                                    display_name=name, role=ROLE_CITIZEN, preferred_language=lang)
+            is_new = True
+        except DuplicateEmailError:  # lost a race with a parallel request
+            u = store.get_by_email(ident.email)
+    if not u or not u.get("is_active", True):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "This account is not available")
+    u = store.update(u["id"], last_login_at=utcnow()) or u
+    out = _token_response(u)
+    out["is_new"] = is_new
+    return out
 
 
 @router.post("/login", dependencies=[Depends(rate_limit("login", 20, 300))])

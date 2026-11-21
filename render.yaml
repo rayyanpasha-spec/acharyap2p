@@ -41,6 +41,10 @@ services:
         sync: false
       - key: AI_PROVIDER_ORDER
         value: openai,rules
+      # Google Sign-In: PUBLIC client id only (no client secret is used). Add your Vercel URL as an
+      # "Authorised JavaScript origin" on the OAuth client in Google Cloud Console.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
       # CORS: exact Vercel URL(s), comma separated, no trailing slash. Regex is optional (Vercel preview URLs).
       - key: FRONTEND_ORIGIN
         sync: false

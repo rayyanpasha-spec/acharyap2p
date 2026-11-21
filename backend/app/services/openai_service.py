@@ -23,6 +23,10 @@ def get_client():
 
 
 def _responses_call(client, system: str, user_text: str, photos: List[Tuple[bytes, str]]) -> str:
+    # OpenAI's JSON mode requires the word "json" inside the INPUT messages (the `instructions` field does not count;
+    # verified against the live API: HTTP 400 otherwise).
+    if "json" not in user_text.lower():
+        user_text = user_text + "\n\nRespond with a single JSON object only."
     content: List[dict] = [{"type": "input_text", "text": user_text}]
     for raw, ctype in photos:
         content.append({"type": "input_image", "image_url": imgs.to_data_url(raw, ctype)})

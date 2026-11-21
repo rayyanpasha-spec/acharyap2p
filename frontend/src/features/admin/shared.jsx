@@ -44,3 +44,21 @@ export function genPassword(len = 12) {
   for (let i = 0; i < len; i += 1) out += chars[arr[i] % chars.length]
   return `${out}9a`
 }
+
+/** Scroll area that fills the remaining height of a flex-col panel (desktop) and scrolls both ways. */
+export function Scroll({ children, className }) {
+  return <div className={`min-h-0 flex-1 overflow-auto ${className || ''}`}>{children}</div>
+}
+
+/** One-line honest-labelling / guidance strip (replaces large banners). tone: 'warning' | 'civic' */
+export function NoteStrip({ tone = 'civic', title, children }) {
+  const t = tone === 'warning' ? 'border-warning/30 bg-warning-100/70' : 'border-civic/20 bg-civic-50'
+  return (
+    <div className={`shrink-0 border-b px-4 py-2 text-[12.5px] leading-snug text-ink ${t}`}>
+      {title && <b className="mr-1.5">{title}.</b>}{children}
+    </div>
+  )
+}
+
+/** Compact controls for admin toolbars/tables (ui inputs default to h-10). */
+export const ADMIN_CTRL = '!h-8 !text-[13px]'

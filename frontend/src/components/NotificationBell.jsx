@@ -32,10 +32,10 @@ export default function NotificationBell({ className }) {
 
   return (
     <Link to="/app/notifications" aria-label={label} title={label}
-      className={cn('relative inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-line-strong bg-surface text-ink hover:bg-paper', className)}>
+      className={cn('relative inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-line-strong bg-surface text-forest transition-colors hover:bg-paper', className)}>
       <Bell className="h-[18px] w-[18px]" aria-hidden />
       {count > 0 && (
-        <span className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-saffron px-1 text-[10px] font-bold text-white">
+        <span className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-surface bg-saffron px-1 text-[10px] font-bold text-white box-content">
           {count > 99 ? '99+' : count}
         </span>
       )}

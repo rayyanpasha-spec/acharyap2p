@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_MINUTES: int = 60
     JWT_REFRESH_TOKEN_DAYS: int = 7
 
+    # --- Google Sign-In (ID-token flow: only the PUBLIC client id is needed; no client secret is stored) ---
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_TOKENINFO_URL: str = "https://oauth2.googleapis.com/tokeninfo"
+
     # --- AI: OpenAI primary, Ollama backup, deterministic rules as last resort ---
     AI_PROVIDER_ORDER: str = "openai,ollama,rules"
     OPENAI_API_KEY: str = ""

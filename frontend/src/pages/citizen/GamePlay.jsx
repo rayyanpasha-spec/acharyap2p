@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { api, errMsg } from '../../lib/api'
-import { Button, Card, CardBody, Notice, PageHeader, Spinner } from '../../components/ui'
+import { Button, Notice, Page, Panel, Spinner } from '../../components/ui'
 import CleanCityGame, { normaliseItems } from '../../features/civicverse/CleanCityGame'
 import QuizGame, { normaliseQuestions } from '../../features/civicverse/QuizGame'
 import ResultPanel from '../../features/civicverse/ResultPanel'
@@ -67,43 +67,40 @@ export default function GamePlay() {
   const known = gameCode === 'clean_city' || gameCode === 'civic_quiz'
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <Link to="/app/civicverse" className="mb-3 inline-flex items-center gap-1.5 text-sm font-semibold text-civic hover:underline">
-        <ArrowLeft className="h-4 w-4" aria-hidden /> CivicVerse
-      </Link>
-      <PageHeader title={title} subtitle={BLURBS[gameCode]} />
+    <Page
+      title={title}
+      subtitle={BLURBS[gameCode]}
+      actions={<Link to="/app/civicverse" className="inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-line-strong bg-surface px-3 text-[13px] font-semibold text-civic transition-colors hover:bg-paper"><ArrowLeft className="h-4 w-4" aria-hidden /> CivicVerse</Link>}
+    >
+      <Panel className="mx-auto w-full max-w-3xl flex-1" bodyClassName="p-3 sm:p-4">
+        {phase === 'starting' && <Spinner label="Getting your game ready…" />}
 
-      {phase === 'starting' && <Spinner label="Getting your game ready…" />}
-
-      {phase === 'error' && (
-        <Card><CardBody className="space-y-3">
-          <Notice tone="warning" title="We could not start this game">{error}</Notice>
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={start}>Try again</Button>
-            <Link to="/app/civicverse" className="inline-flex h-10 items-center rounded-[10px] px-4 text-sm font-semibold text-civic hover:bg-civic-50">Back to hub</Link>
+        {phase === 'error' && (
+          <div className="space-y-3">
+            <Notice tone="warning" title="We could not start this game">{error}</Notice>
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={start}>Try again</Button>
+              <Link to="/app/civicverse" className="inline-flex h-10 items-center rounded-[10px] px-4 text-sm font-semibold text-civic hover:bg-civic-50">Back to hub</Link>
+            </div>
           </div>
-        </CardBody></Card>
-      )}
+        )}
 
-      {phase === 'playing' && session && (
-        <div className="space-y-3">
-          {submitErr && (
-            <Notice tone="critical" title="Could not submit">
-              <p>{submitErr}</p>
-              <Button className="mt-2" size="sm" variant="secondary" onClick={start}>Start a new round</Button>
-            </Notice>
-          )}
-          {gameCode === 'clean_city' && <CleanCityGame config={session.config} onSubmit={submit} submitting={submitting} />}
-          {gameCode === 'civic_quiz' && <QuizGame config={session.config} onSubmit={submit} submitting={submitting} />}
-          {!known && (
-            <Card><CardBody>
-              <p className="text-sm text-muted">This game is not supported in this version of the app yet.</p>
-            </CardBody></Card>
-          )}
-        </div>
-      )}
+        {phase === 'playing' && session && (
+          <div className="space-y-3">
+            {submitErr && (
+              <Notice tone="critical" title="Could not submit">
+                <p>{submitErr}</p>
+                <Button className="mt-2" size="sm" variant="secondary" onClick={start}>Start a new round</Button>
+              </Notice>
+            )}
+            {gameCode === 'clean_city' && <CleanCityGame config={session.config} onSubmit={submit} submitting={submitting} />}
+            {gameCode === 'civic_quiz' && <QuizGame config={session.config} onSubmit={submit} submitting={submitting} />}
+            {!known && <p className="text-sm text-muted">This game is not supported in this version of the app yet.</p>}
+          </div>
+        )}
 
-      {phase === 'result' && <ResultPanel result={result} labels={labels} gameTitle={title} onPlayAgain={start} />}
-    </div>
+        {phase === 'result' && <ResultPanel result={result} labels={labels} gameTitle={title} onPlayAgain={start} />}
+      </Panel>
+    </Page>
   )
 }

@@ -31,7 +31,7 @@ export function Button({ variant = 'primary', size = 'md', loading, className, c
 
 /* ---------- Card ---------- */
 export function Card({ className, children, ...p }) {
-  return <div className={cn('rounded-[10px] border border-line bg-surface', className)} {...p}>{children}</div>
+  return <div className={cn('rounded-[14px] border border-line bg-surface shadow-[0_1px_2px_rgba(36,76,57,0.05)]', className)} {...p}>{children}</div>
 }
 export function CardHeader({ title, subtitle, action, className }) {
   return (
@@ -147,9 +147,9 @@ export function Notice({ tone = 'civic', title, children, className }) {
 /* ---------- Layout bits ---------- */
 export function PageHeader({ title, subtitle, actions }) {
   return (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+    <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="font-display text-2xl font-extrabold text-ink sm:text-[28px]">{title}</h1>
+        <h1 className="font-display text-xl font-extrabold text-ink sm:text-2xl">{title}</h1>
         {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -195,7 +195,7 @@ export function Modal({ open, onClose, title, children, footer, wide }) {
 export const Table = ({ className, children }) => (
   <div className="overflow-x-auto"><table className={cn('w-full border-collapse text-left text-sm', className)}>{children}</table></div>
 )
-export const Th = ({ className, children, ...p }) => <th className={cn('border-b border-line bg-paper px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted', className)} {...p}>{children}</th>
+export const Th = ({ className, children, ...p }) => <th className={cn('sticky top-0 z-10 border-b border-line bg-paper px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted', className)} {...p}>{children}</th>
 export const Td = ({ className, children, ...p }) => <td className={cn('border-b border-line px-3 py-2.5 align-middle', className)} {...p}>{children}</td>
 
 export function Tabs({ tabs, value, onChange }) {
@@ -248,4 +248,72 @@ export function AuthImage({ imageId, src, alt = '', className }) {
   if (failed) return <div className={cn('flex items-center justify-center bg-paper text-xs text-muted', className)}>Image unavailable</div>
   if (!url) return <div className={cn('animate-pulse bg-paper', className)} aria-label="Loading image" />
   return <img src={url} alt={alt} className={cn('object-cover', className)} />
+}
+
+
+/* =====================================================================================================
+   FIXED-SIZE APP-SHELL PRIMITIVES (desktop >= 1024px: no page-level scrolling; each Panel scrolls inside)
+   ===================================================================================================== */
+
+/** Full-height page body. Put inside a layout's <main>. On desktop it fills the viewport (no page scroll);
+ *  below lg it is a normal scrolling page. Children: use <Panel/> / grids with `min-h-0`. */
+export function Page({ title, subtitle, actions, children, className }) {
+  return (
+    <div className={cn('flex min-h-full flex-col lg:h-full lg:min-h-0', className)}>
+      {(title || actions) && (
+        <div className="mb-3 flex shrink-0 flex-wrap items-end justify-between gap-2">
+          <div className="min-w-0">
+            {title && <h1 className="font-display text-xl font-extrabold leading-tight text-ink sm:text-2xl">{title}</h1>}
+            {subtitle && <p className="mt-0.5 text-[13px] text-muted">{subtitle}</p>}
+          </div>
+          {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+        </div>
+      )}
+      <div className="flex min-h-0 flex-1 flex-col gap-3">{children}</div>
+    </div>
+  )
+}
+
+/** A card with a fixed header and a body that scrolls INSIDE it on desktop (scroll=false -> body does not scroll). */
+export function Panel({ title, subtitle, action, icon: Icon, tone = 'forest', children, className, bodyClassName, scroll = true, footer }) {
+  const tones = { forest: 'bg-forest-100 text-forest', civic: 'bg-civic-100 text-civic', teal: 'bg-teal-100 text-teal', plum: 'bg-plum-100 text-plum', saffron: 'bg-saffron-100 text-saffron', critical: 'bg-critical-100 text-critical' }
+  return (
+    <section className={cn('flex min-h-0 flex-col overflow-hidden rounded-[14px] border border-line bg-surface shadow-[0_1px_2px_rgba(36,76,57,0.05)]', className)}>
+      {(title || action) && (
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-line px-4 py-2.5">
+          <div className="flex min-w-0 items-center gap-2.5">
+            {Icon && <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-lg', tones[tone])}><Icon className="h-4 w-4" aria-hidden /></span>}
+            <div className="min-w-0">
+              <h2 className="truncate font-display text-[14px] font-bold text-ink">{title}</h2>
+              {subtitle && <p className="truncate text-[12px] text-muted">{subtitle}</p>}
+            </div>
+          </div>
+          {action}
+        </header>
+      )}
+      <div className={cn('min-h-0 flex-1', scroll && 'lg:overflow-y-auto', bodyClassName ?? 'p-4')}>{children}</div>
+      {footer && <footer className="shrink-0 border-t border-line bg-paper px-4 py-2.5">{footer}</footer>}
+    </section>
+  )
+}
+
+/** Coloured rounded icon tile (used for stats, features, nav). */
+export function IconTile({ icon: Icon, tone = 'forest', size = 'md', className }) {
+  const tones = { forest: 'bg-forest-100 text-forest', civic: 'bg-civic-100 text-civic', teal: 'bg-teal-100 text-teal', plum: 'bg-plum-100 text-plum', saffron: 'bg-saffron-100 text-saffron', critical: 'bg-critical-100 text-critical', high: 'bg-high-100 text-high', success: 'bg-success-100 text-success' }
+  const sz = { sm: 'h-7 w-7 rounded-lg [&>svg]:h-3.5 [&>svg]:w-3.5', md: 'h-9 w-9 rounded-[10px] [&>svg]:h-[18px] [&>svg]:w-[18px]', lg: 'h-12 w-12 rounded-xl [&>svg]:h-6 [&>svg]:w-6' }[size]
+  return <span className={cn('inline-flex shrink-0 items-center justify-center', tones[tone], sz, className)}><Icon aria-hidden /></span>
+}
+
+/** Segmented control (view switchers, filters). options: [{value,label}] */
+export function Segmented({ options, value, onChange, className, ariaLabel }) {
+  return (
+    <div role="tablist" aria-label={ariaLabel} className={cn('inline-flex rounded-[10px] border border-line-strong bg-paper p-0.5', className)}>
+      {options.map((o) => (
+        <button key={o.value} role="tab" aria-selected={value === o.value} onClick={() => onChange(o.value)}
+          className={cn('rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors', value === o.value ? 'bg-surface text-forest shadow-[0_1px_2px_rgba(0,0,0,0.08)]' : 'text-muted hover:text-ink')}>
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
 }

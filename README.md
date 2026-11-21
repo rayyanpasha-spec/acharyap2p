@@ -185,6 +185,7 @@ Defaults are in `backend/app/config.py`. `backend/.env.example` shows the common
 | `JWT_REFRESH_TOKEN_DAYS` | `7` | Refresh token lifetime |
 | `AI_PROVIDER_ORDER` | `openai,ollama,rules` | Provider chain; `rules` is the offline fallback |
 | `OPENAI_API_KEY` | empty | Needed for OpenAI triage and voice transcription |
+| `GOOGLE_CLIENT_ID` | empty | Enables "Continue with Google" (sign in AND sign up). Public client id only - the Google client secret is **not** used. In Google Cloud Console add every frontend origin (e.g. `http://localhost:5173`, your Vercel URL) as an *Authorised JavaScript origin* on the OAuth client, or Google rejects the popup. Google sign-up always creates a **citizen**; staff accounts are issued by an admin |
 | `OPENAI_TRIAGE_MODEL` | `gpt-4.1-mini` | |
 | `OPENAI_TRANSCRIPTION_MODEL` | `gpt-4o-mini-transcribe` | |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Local backup model server |

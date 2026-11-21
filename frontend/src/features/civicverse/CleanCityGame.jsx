@@ -115,7 +115,7 @@ export default function CleanCityGame({ config, onSubmit, submitting }) {
   const pct = Math.round((Math.min(pos, items.length) / items.length) * 100)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between gap-3 text-sm">
         <span className="font-semibold text-ink">{done ? 'All items sorted' : `Item ${pos + 1} of ${items.length}`}</span>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-line-strong bg-surface px-3 py-1 font-mono text-sm text-ink" aria-label={`Time elapsed ${fmtClock(elapsed)}`}>
@@ -131,7 +131,7 @@ export default function CleanCityGame({ config, onSubmit, submitting }) {
           <Card className="border-forest/30">
             <CardBody className="text-center">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted">Which bin does this go in?</p>
-              <p className="mt-2 font-display text-3xl font-extrabold text-ink" aria-live="polite">{item.name}</p>
+              <p className="mt-2 font-display text-2xl font-extrabold text-ink" aria-live="polite">{item.name}</p>
             </CardBody>
           </Card>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" role="group" aria-label="Choose a bin">
@@ -142,7 +142,7 @@ export default function CleanCityGame({ config, onSubmit, submitting }) {
                 onClick={() => choose(b.code)}
                 aria-keyshortcuts={String(i + 1)}
                 className={cn(
-                  'flex min-h-[64px] items-center gap-3 rounded-[10px] border-2 px-4 py-3 text-left transition-transform duration-150',
+                  'flex min-h-[56px] items-center gap-3 rounded-[10px] border-2 px-4 py-3 text-left transition-transform duration-150',
                   BIN_STYLES[i % BIN_STYLES.length],
                   picked === b.code && 'scale-[0.97] ring-2 ring-ink/30',
                 )}
@@ -166,7 +166,7 @@ export default function CleanCityGame({ config, onSubmit, submitting }) {
 
       {done && (
         <Card>
-          <CardBody className="space-y-4">
+          <CardBody className="space-y-3">
             <p className="text-sm text-ink">Review your choices, then submit. The score is worked out on the server.</p>
             <ul className="divide-y divide-line rounded-[10px] border border-line">
               {items.map((it, idx) => (

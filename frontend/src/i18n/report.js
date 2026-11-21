@@ -188,6 +188,15 @@ const ROWS = [
   ['report.prefill.here', 'this location', 'ಈ ಸ್ಥಳ', 'इस स्थान', 'இந்த இடம்', 'ఈ ప్రదేశం', 'ഈ സ്ഥലം'],
   ['report.prefill.banner_bin', 'Reporting an overflowing bin near {bin}', '{bin} ಬಳಿ ಉಕ್ಕಿ ಹರಿಯುತ್ತಿರುವ ಕಸದ ಡಬ್ಬಿಯನ್ನು ವರದಿ ಮಾಡಲಾಗುತ್ತಿದೆ', '{bin} के पास भरे हुए कूड़ेदान की रिपोर्ट', '{bin} அருகே நிரம்பிய தொட்டியைப் புகாரளிக்கிறீர்கள்', '{bin} దగ్గర పొంగిపొర్లుతున్న డబ్బాను నివేదిస్తున్నారు', '{bin} സമീപം നിറഞ്ഞൊഴുകുന്ന പെട്ടി റിപ്പോർട്ട് ചെയ്യുന്നു'],
   ['report.prefill.banner_cat', 'Reporting: {cat}', 'ವರದಿ ಮಾಡಲಾಗುತ್ತಿದೆ: {cat}', 'रिपोर्ट: {cat}', 'புகார்: {cat}', 'నివేదిస్తున్నారు: {cat}', 'റിപ്പോർട്ട് ചെയ്യുന്നത്: {cat}'],
+
+  // Added with the fixed-size wizard redesign (English only for now; other languages fall back to English until reviewed).
+  ['report.dup.what', 'What would you like to do?'],
+  ['report.dup.count', 'similar'],
+  ['report.dup.n_found', '{n} similar report(s) nearby'],
+  ['report.prev.cat', 'Category'],
+  ['report.prev.sev', 'Severity'],
+  ['report.sub.consent_title', 'Location and consent'],
+  ['report.sub.ready', 'Ready to submit'],
 ]
 
 const LANGS = ['en', 'kn', 'hi', 'ta', 'te', 'ml']

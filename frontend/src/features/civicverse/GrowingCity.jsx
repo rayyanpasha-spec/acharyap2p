@@ -2,7 +2,7 @@
 // It represents community participation, not literal municipal construction.
 import { Link } from 'react-router-dom'
 import { Sprout } from 'lucide-react'
-import { Card, CardBody, CardHeader, EmptyState } from '../../components/ui'
+import { EmptyState, Panel } from '../../components/ui'
 import { titleCase } from '../../lib/format'
 
 const C = {
@@ -79,25 +79,24 @@ function Element({ type, x, base, idx }) {
   }
 }
 
-export default function GrowingCity({ items }) {
+export default function GrowingCity({ items, className }) {
   const list = Array.isArray(items) ? items.filter(Boolean) : []
   const shown = list.slice(0, MAX_SLOTS)
   const extra = list.length - shown.length
 
   return (
-    <Card>
-      <CardHeader title="Growing City" subtitle="Your neighbourhood grows with each verified contribution" />
-      <CardBody>
-        {list.length === 0 ? (
-          <EmptyState
-            icon={Sprout}
-            title="Your city is waiting to grow"
-            hint="When an authorised officer verifies a resolution that began with your report, a tree, park, road, streetlight or recycling station appears here."
-          />
-        ) : (
-          <>
-            <style>{'@keyframes cl-grow{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}'}</style>
-            <svg viewBox="0 0 480 220" className="w-full rounded-[10px] border border-line" role="img" aria-label={`Growing City scene with ${list.length} element${list.length === 1 ? '' : 's'}, one for each verified contribution`}>
+    <Panel title="Growing City" subtitle="Grows with each verified contribution" icon={Sprout} tone="forest" scroll={list.length === 0} className={className} bodyClassName="flex flex-col gap-2 p-3">
+      {list.length === 0 ? (
+        <EmptyState
+          icon={Sprout}
+          title="Your city is waiting to grow"
+          hint="When an authorised officer verifies a resolution that began with your report, a tree, park, road, streetlight or recycling station appears here."
+        />
+      ) : (
+        <>
+          <style>{'@keyframes cl-grow{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}'}</style>
+          <div className="aspect-[480/220] min-h-0 lg:aspect-auto lg:min-h-[120px] lg:flex-1">
+            <svg viewBox="0 0 480 220" preserveAspectRatio="xMidYMid meet" className="h-full w-full rounded-[10px] border border-line" role="img" aria-label={`Growing City scene with ${list.length} element${list.length === 1 ? '' : 's'}, one for each verified contribution`}>
               <rect width="480" height="220" fill={C.sky} />
               <rect y="96" width="480" height="124" fill={C.ground} />
               <House x={40} base={110} fill={C.house1} />
@@ -112,21 +111,21 @@ export default function GrowingCity({ items }) {
                 return <Element key={`${it.ticket_number || 'x'}-${i}`} type={it.type} x={p.x} base={p.base} idx={i} />
               })}
             </svg>
-            <p className="mt-2 text-xs text-muted">
-              Growing City represents community participation, not literal municipal construction.
-              {extra > 0 && ` Showing the first ${MAX_SLOTS} of ${list.length} elements.`}
-            </p>
-            <ul className="mt-3 flex flex-wrap gap-2">
-              {list.map((it, i) => (
-                <li key={`${it.ticket_number || 'x'}-${i}`} className="rounded-md border border-line bg-paper px-2 py-1 text-xs text-ink">
-                  {it.label || titleCase(it.type || 'tree')}
-                  {it.ticket_number && <> &middot; <Link to={`/app/complaints/${it.ticket_number}`} className="font-semibold text-civic hover:underline">{it.ticket_number}</Link></>}
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </CardBody>
-    </Card>
+          </div>
+          <p className="shrink-0 text-[11px] text-muted">
+            Growing City represents community participation, not literal municipal construction.
+            {extra > 0 && ` Showing the first ${MAX_SLOTS} of ${list.length} elements.`}
+          </p>
+          <ul className="flex max-h-[4.25rem] shrink-0 flex-wrap gap-1.5 overflow-y-auto">
+            {list.map((it, i) => (
+              <li key={`${it.ticket_number || 'x'}-${i}`} className="rounded-md border border-line bg-paper px-2 py-0.5 text-xs text-ink">
+                {it.label || titleCase(it.type || 'tree')}
+                {it.ticket_number && <> &middot; <Link to={`/app/complaints/${it.ticket_number}`} className="font-semibold text-civic hover:underline">{it.ticket_number}</Link></>}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </Panel>
   )
 }

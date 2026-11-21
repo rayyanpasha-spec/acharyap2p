@@ -68,8 +68,8 @@ export default function QuizGame({ config, onSubmit, submitting }) {
 
       <Card className="border-civic/30">
         <CardBody>
-          <h2 className="font-display text-xl font-extrabold text-ink" id="quiz-question">{q.text}</h2>
-          <div className="mt-4 grid gap-3" role="radiogroup" aria-labelledby="quiz-question">
+          <h2 className="font-display text-lg font-extrabold text-ink" id="quiz-question">{q.text}</h2>
+          <div className="mt-3 grid gap-2" role="radiogroup" aria-labelledby="quiz-question">
             {q.options.map((opt, i) => {
               const on = selected === i
               return (
@@ -81,7 +81,7 @@ export default function QuizGame({ config, onSubmit, submitting }) {
                   aria-keyshortcuts={String(i + 1)}
                   onClick={() => setChoice((c) => ({ ...c, [q.id]: i }))}
                   className={cn(
-                    'flex min-h-[56px] items-center gap-3 rounded-[10px] border-2 px-4 py-3 text-left text-base transition-all duration-150',
+                    'flex min-h-[48px] items-center gap-3 rounded-[10px] border-2 px-3.5 py-2 text-left text-[15px] transition-all duration-150',
                     on ? 'border-civic bg-civic-100 font-semibold text-civic' : 'border-line-strong bg-surface text-ink hover:bg-civic-50',
                   )}
                 >

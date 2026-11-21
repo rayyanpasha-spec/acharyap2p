@@ -2,7 +2,7 @@
 // Props: language, maxSeconds, onUse({text, transcriptId, language}), onTypeInstead(), disabled
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Mic, Square, Trash2, RotateCcw, Check, Keyboard } from 'lucide-react'
-import { Button, Notice, Spinner, Textarea } from './ui'
+import { Button, Notice, Spinner, Textarea, cn } from './ui'
 import { errMsg } from '../lib/api'
 import { useT } from '../lib/i18n'
 import { confirmTranscript, fill, transcribeAudio } from '../features/report/api'
@@ -16,7 +16,7 @@ const pickMime = () => {
 const extFor = (mime) => (mime.includes('mp4') ? 'm4a' : mime.includes('ogg') ? 'ogg' : 'webm')
 const fmtClock = (sec) => `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(Math.floor(sec % 60)).padStart(2, '0')}`
 
-export default function VoiceRecorder({ language, maxSeconds = 90, onUse, onTypeInstead, disabled }) {
+export default function VoiceRecorder({ language, maxSeconds = 90, onUse, onTypeInstead, disabled, className }) {
   const { t } = useT()
   // phase: idle | recording | uploading | review | used | error
   const [phase, setPhase] = useState('idle')
@@ -151,67 +151,79 @@ export default function VoiceRecorder({ language, maxSeconds = 90, onUse, onType
   }
 
   const player = audioUrl && (
-    <div>
+    <div className="w-full">
       <p className="mb-1 text-xs font-semibold text-muted">{t('report.voice.listen', 'Listen to your recording')}</p>
-      <audio controls src={audioUrl} className="w-full" />
+      <audio controls src={audioUrl} className="h-10 w-full" />
     </div>
   )
+  const pct = Math.min(100, (elapsed / Math.max(1, maxSeconds)) * 100)
 
+  // `my-auto` centres the recorder inside a flex-column card body and falls back to top-aligned when the content is taller.
   return (
-    <div className="space-y-3" aria-live="polite">
+    <div className={cn('my-auto flex w-full flex-col items-center gap-3 text-center', className)} aria-live="polite">
       {phase === 'idle' && (
         <>
-          <button type="button" onClick={start} disabled={disabled}
-            className="flex min-h-[88px] w-full flex-col items-center justify-center gap-2 rounded-[10px] border border-forest/30 bg-forest-50 px-3 py-4 text-forest hover:bg-forest-100 disabled:opacity-50">
-            <Mic className="h-8 w-8" aria-hidden />
-            <span className="font-display text-base font-bold">{t('report.speak.button', 'Speak your complaint')}</span>
+          <button type="button" onClick={start} disabled={disabled} aria-label={t('report.speak.button', 'Speak your complaint')}
+            className="flex h-20 w-20 items-center justify-center rounded-full bg-saffron text-white shadow-[0_2px_6px_rgba(193,120,46,0.35)] transition-colors hover:bg-[#a96624] disabled:opacity-50">
+            <Mic className="h-9 w-9" aria-hidden />
           </button>
-          <p className="text-xs text-muted">{fill(t('report.speak.hint', 'Record up to {n} seconds. You can listen back and fix the words before using them.'), { n: maxSeconds })}</p>
+          <p className="font-display text-[15px] font-bold text-ink">{t('report.speak.button', 'Speak your complaint')}</p>
+          <p className="max-w-[260px] text-xs text-muted">{fill(t('report.speak.hint', 'Record up to {n} seconds. You can listen back and fix the words before using them.'), { n: maxSeconds })}</p>
           {!supported && <p className="text-xs font-medium text-high">{t('report.voice.unsupported', 'This browser cannot record audio.')}</p>}
         </>
       )}
 
       {phase === 'recording' && (
-        <div className="space-y-3 rounded-[10px] border border-critical/30 bg-critical-100 p-4">
-          <div className="flex items-center gap-3">
-            <span className="cl-pulse h-3.5 w-3.5 rounded-full bg-critical" aria-hidden />
-            <span className="font-semibold text-critical">{t('report.voice.recording', 'Recording')}</span>
-            <span className="ml-auto font-mono text-lg font-bold text-ink" aria-label="elapsed time">{fmtClock(elapsed)} / {fmtClock(maxSeconds)}</span>
+        <>
+          <div className="relative flex h-20 w-20 items-center justify-center">
+            <span className="absolute inset-0 animate-ping rounded-full bg-critical/30" aria-hidden />
+            <button type="button" onClick={stop} aria-label={t('report.voice.stop', 'Stop')}
+              className="relative flex h-20 w-20 items-center justify-center rounded-full bg-critical text-white shadow-[0_2px_6px_rgba(185,74,72,0.35)] hover:bg-[#a13f3d]">
+              <Square className="h-7 w-7 fill-current" aria-hidden />
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="cl-pulse h-2.5 w-2.5 rounded-full bg-critical" aria-hidden />
+            <span className="text-sm font-semibold text-critical">{t('report.voice.recording', 'Recording')}</span>
+          </div>
+          <span className="font-mono text-lg font-bold text-ink" aria-label="elapsed time">{fmtClock(elapsed)} / {fmtClock(maxSeconds)}</span>
+          <div className="h-1.5 w-full max-w-[240px] overflow-hidden rounded-full bg-line" aria-hidden>
+            <div className="h-full rounded-full bg-critical" style={{ width: `${pct}%` }} />
           </div>
           <div className="flex gap-2">
-            <Button size="lg" onClick={stop} className="flex-1"><Square className="h-4 w-4" aria-hidden /> {t('report.voice.stop', 'Stop')}</Button>
-            <Button size="lg" variant="secondary" onClick={discard}><Trash2 className="h-4 w-4" aria-hidden /> {t('report.voice.discard', 'Discard')}</Button>
+            <Button size="sm" onClick={stop}><Square className="h-3.5 w-3.5" aria-hidden /> {t('report.voice.stop', 'Stop')}</Button>
+            <Button size="sm" variant="secondary" onClick={discard}><Trash2 className="h-4 w-4" aria-hidden /> {t('report.voice.discard', 'Discard')}</Button>
           </div>
-        </div>
+        </>
       )}
 
       {phase === 'uploading' && (
-        <div className="space-y-3 rounded-[10px] border border-civic/30 bg-civic-50 p-4">
+        <div className="w-full space-y-3 rounded-[10px] border border-civic/30 bg-civic-50 p-3">
           <Spinner className="py-2" label={t('report.voice.uploading', 'Uploading for transcription...')} />
           {player}
         </div>
       )}
 
       {phase === 'review' && (
-        <div className="space-y-3 rounded-[10px] border border-line-strong bg-surface p-4">
+        <div className="w-full space-y-2.5 rounded-[10px] border border-line-strong bg-surface p-3 text-left">
           {player}
           <div>
             <label htmlFor="voice-transcript" className="mb-1 block text-[13px] font-semibold">{t('report.voice.transcript', 'Transcript (you can edit it)')}</label>
-            <Textarea id="voice-transcript" value={transcript} onChange={(e) => setTranscript(e.target.value)} maxLength={4000} />
+            <Textarea id="voice-transcript" rows={4} value={transcript} onChange={(e) => setTranscript(e.target.value)} maxLength={4000} />
             {!transcript.trim() && <p className="mt-1 text-xs text-high">{t('report.voice.blank', 'No words were detected. Please type what you said, or record again.')}</p>}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={use} loading={busy} disabled={!transcript.trim()}><Check className="h-4 w-4" aria-hidden /> {t('report.voice.use', 'Use this as my complaint')}</Button>
-            <Button variant="secondary" onClick={start}><RotateCcw className="h-4 w-4" aria-hidden /> {t('report.voice.rerecord', 'Record again')}</Button>
-            <Button variant="ghost" onClick={discard}><Trash2 className="h-4 w-4" aria-hidden /> {t('report.voice.discard', 'Discard')}</Button>
+            <Button size="sm" onClick={use} loading={busy} disabled={!transcript.trim()}><Check className="h-4 w-4" aria-hidden /> {t('report.voice.use', 'Use this as my complaint')}</Button>
+            <Button size="sm" variant="secondary" onClick={start}><RotateCcw className="h-4 w-4" aria-hidden /> {t('report.voice.rerecord', 'Record again')}</Button>
+            <Button size="sm" variant="ghost" onClick={discard}><Trash2 className="h-4 w-4" aria-hidden /> {t('report.voice.discard', 'Discard')}</Button>
           </div>
         </div>
       )}
 
       {phase === 'used' && (
-        <div className="space-y-2 rounded-[10px] border border-success/30 bg-success-100 p-4">
-          <p className="text-sm font-semibold text-success">{t('report.voice.used', 'Your words were added to the description.')}</p>
-          <div className="flex flex-wrap gap-2">
+        <div className="w-full space-y-2 rounded-[10px] border border-success/30 bg-success-100 p-3">
+          <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-success"><Check className="h-4 w-4" aria-hidden /> {t('report.voice.used', 'Your words were added to the description.')}</p>
+          <div className="flex flex-wrap justify-center gap-2">
             <Button size="sm" variant="secondary" onClick={start}><RotateCcw className="h-4 w-4" aria-hidden /> {t('report.voice.rerecord', 'Record again')}</Button>
             <Button size="sm" variant="ghost" onClick={discard}><Trash2 className="h-4 w-4" aria-hidden /> {t('report.voice.discard', 'Discard')}</Button>
           </div>
@@ -219,7 +231,7 @@ export default function VoiceRecorder({ language, maxSeconds = 90, onUse, onType
       )}
 
       {phase === 'error' && error && (
-        <Notice tone={error.kind === 'unavailable' ? 'warning' : 'critical'} title={t('report.voice.problem', 'Voice recording problem')}>
+        <Notice tone={error.kind === 'unavailable' ? 'warning' : 'critical'} title={t('report.voice.problem', 'Voice recording problem')} className="w-full text-left">
           <p>{error.message}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {error.kind === 'upload' && fileRef.current && <Button size="sm" variant="secondary" onClick={() => upload(fileRef.current, durRef.current)}>{t('report.voice.retry', 'Try again')}</Button>}

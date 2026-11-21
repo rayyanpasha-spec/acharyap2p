@@ -514,3 +514,25 @@ def test_ai_status_and_preview_endpoints(client, make_user):
     data = r.json()
     assert data["category"] == "roads" and data["provider"] == "rules" and data["department_code"] == "road_maintenance"
     assert client.post("/api/v1/ai/preview-triage", json={"text": "x"}, headers=officer).status_code == 422
+
+
+def test_openai_responses_input_contains_word_json():
+    """Regression: the live OpenAI API rejects json_object mode (HTTP 400) unless the INPUT contains the word 'json'."""
+    from app.services import openai_service
+
+    captured = {}
+
+    class _Resp:
+        output_text = "{}"
+
+    class _Responses:
+        def create(self, **kw):
+            captured.update(kw)
+            return _Resp()
+
+    class _Client:
+        responses = _Responses()
+
+    openai_service._responses_call(_Client(), "system prompt", "A pothole near the bus stop", [])
+    inputs = captured["input"][0]["content"]
+    assert any("json" in part.get("text", "").lower() for part in inputs if part.get("type") == "input_text")

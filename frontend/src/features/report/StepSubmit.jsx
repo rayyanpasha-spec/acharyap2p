@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom'
-import { CheckCircle2, Pencil } from 'lucide-react'
-import { Badge, Button, Card, CardBody, CardHeader, Notice, SeverityBadge, StatusBadge } from '../../components/ui'
+import { CheckCircle2, Pencil, ShieldCheck } from 'lucide-react'
+import { Badge, Button, IconTile, SeverityBadge, StatusBadge } from '../../components/ui'
 import { useT, LANGS } from '../../lib/i18n'
 import { useMeta } from '../../store/meta'
 import { errMsg } from '../../lib/api'
 import { fullAddress, fill } from './api'
+import { Callout, LABEL, MiniCard, StepHead } from './parts'
 
 /** Human message for a failed submit/preview call. */
 export function submitError(e, t) {
@@ -19,21 +20,29 @@ export function submitError(e, t) {
 
 function Row({ label, onEdit, editLabel, children }) {
   return (
-    <div className="flex items-start justify-between gap-3 border-b border-line py-3 last:border-b-0">
+    <div className="flex items-start justify-between gap-3 border-b border-line py-2.5 last:border-b-0">
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>
+        <p className={LABEL}>{label}</p>
         <div className="mt-1 text-sm">{children}</div>
       </div>
-      {onEdit && <button type="button" onClick={onEdit} className="inline-flex min-h-10 items-center gap-1 px-1 text-sm font-semibold text-civic hover:underline"><Pencil className="h-3.5 w-3.5" aria-hidden />{editLabel}</button>}
+      {onEdit && <button type="button" onClick={onEdit} className="inline-flex min-h-9 items-center gap-1 px-1 text-[13px] font-semibold text-civic hover:underline"><Pencil className="h-3.5 w-3.5" aria-hidden />{editLabel}</button>}
     </div>
   )
 }
 
-export function StepSubmit({ s, goto, onSubmit }) {
+/** Label of the final action button (rendered in the wizard's pinned footer). */
+export function submitLabel(s, t) {
+  const a = s.dup.choice?.action
+  if (s.submit.status === 'loading') return t('report.sub.sending', 'Submitting...')
+  if (a === 'follow') return t('report.sub.follow_btn', 'Follow report')
+  if (a === 'add_evidence') return t('report.sub.evidence_btn', 'Add to existing report')
+  return t('report.sub.btn', 'Submit report')
+}
+
+export function StepSubmit({ s, goto, title }) {
   const { t } = useT()
   const meta = useMeta((x) => x.meta)
   const choice = s.dup.choice
-  const busy = s.submit.status === 'loading'
   const edit = t('report.edit', 'Edit')
   const langLabel = LANGS.find((l) => l.code === s.language)?.label || s.language
   const addr = fullAddress(s)
@@ -42,19 +51,18 @@ export function StepSubmit({ s, goto, onSubmit }) {
   const evidence = choice?.action === 'add_evidence'
 
   return (
-    <div className="space-y-4">
-      {follow && <Notice tone="civic" title={fill(t('report.sub.follow_title', 'You are about to follow {t}'), { t: choice.ticket })}>{t('report.sub.follow_body', 'No new ticket will be created. You will get updates on the existing report.')}</Notice>}
-      {evidence && <Notice tone="civic" title={fill(t('report.sub.evidence_title', 'You are about to add to {t}'), { t: choice.ticket })}>{t('report.sub.evidence_body', 'Your description and photos will be added to the existing report. No new ticket will be created.')}</Notice>}
-      <Card>
-        <CardHeader title={t('report.sub.title', 'Check your report')} />
-        <CardBody className="py-1 sm:py-1">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <StepHead title={title} />
+      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:grid-rows-[minmax(0,1fr)]">
+        {/* LEFT: the report as it will be sent (scrolls inside) */}
+        <MiniCard icon={CheckCircle2} tone="forest" title={t('report.sub.title', 'Check your report')} bodyClassName="px-3 py-1">
           <Row label={t('report.sub.desc', 'Description')} onEdit={() => goto(0)} editLabel={edit}>
             <p className="whitespace-pre-wrap">{s.text}</p>
             <p className="mt-1 text-xs text-muted">{langLabel}{s.via === 'voice' ? ` - ${t('report.sub.via_voice', 'spoken, then edited by you')}` : ''}</p>
           </Row>
           <Row label={t('report.sub.photos', 'Photos')} onEdit={() => goto(0)} editLabel={edit}>
             {s.images.length ? (
-              <ul className="flex flex-wrap gap-2">{s.images.map((i) => <li key={i.id}><img src={i.url} alt={i.file.name} className="h-16 w-16 rounded-md border border-line object-cover" /></li>)}</ul>
+              <ul className="flex flex-wrap gap-2">{s.images.map((i) => <li key={i.id}><img src={i.url} alt={i.file.name} className="h-14 w-14 rounded-md border border-line object-cover" /></li>)}</ul>
             ) : <span className="text-muted">{t('report.sub.no_photos', 'No photos')}</span>}
           </Row>
           <Row label={t('report.step.location', 'Location')} onEdit={() => goto(1)} editLabel={edit}>
@@ -74,17 +82,21 @@ export function StepSubmit({ s, goto, onSubmit }) {
               </div>
             </Row>
           )}
-        </CardBody>
-      </Card>
+        </MiniCard>
 
-      <p className="text-sm text-muted">{t('report.loc.consent', 'CivicLens uses the location of the issue to find nearby reports and send it to the correct municipal team. Your precise location is not shown publicly.')} {t('report.sub.consent', 'By submitting, you agree that this location and description are used for that purpose.')}</p>
-      {meta?.emergency_notice && <p className="text-xs text-muted">{meta.emergency_notice}</p>}
+        {/* RIGHT: what happens on submit + consent */}
+        <div className="flex min-h-0 flex-col gap-3 lg:overflow-y-auto lg:pr-1">
+          {follow && <Callout tone="civic" title={fill(t('report.sub.follow_title', 'You are about to follow {t}'), { t: choice.ticket })}>{t('report.sub.follow_body', 'No new ticket will be created. You will get updates on the existing report.')}</Callout>}
+          {evidence && <Callout tone="civic" title={fill(t('report.sub.evidence_title', 'You are about to add to {t}'), { t: choice.ticket })}>{t('report.sub.evidence_body', 'Your description and photos will be added to the existing report. No new ticket will be created.')}</Callout>}
 
-      {s.submit.status === 'error' && <Notice tone="critical" title={t('report.sub.failed', 'Your report was not submitted')}>{s.submit.error}</Notice>}
+          <MiniCard icon={ShieldCheck} tone="civic" title={t('report.sub.consent_title', 'Location and consent')} scroll={false}>
+            <p className="text-[13px] text-ink/90">{t('report.loc.consent', 'CivicLens uses the location of the issue to find nearby reports and send it to the correct municipal team. Your precise location is not shown publicly.')} {t('report.sub.consent', 'By submitting, you agree that this location and description are used for that purpose.')}</p>
+            {meta?.emergency_notice && <p className="mt-2 text-xs text-muted">{meta.emergency_notice}</p>}
+          </MiniCard>
 
-      <Button size="lg" className="w-full sm:w-auto" onClick={onSubmit} loading={busy} disabled={busy}>
-        {busy ? t('report.sub.sending', 'Submitting...') : follow ? t('report.sub.follow_btn', 'Follow report') : evidence ? t('report.sub.evidence_btn', 'Add to existing report') : t('report.sub.btn', 'Submit report')}
-      </Button>
+          {s.submit.status === 'error' && <Callout tone="critical" role="alert" title={t('report.sub.failed', 'Your report was not submitted')}>{s.submit.error}</Callout>}
+        </div>
+      </div>
     </div>
   )
 }
@@ -102,32 +114,30 @@ export function Success({ result, onAnother }) {
     : action === 'evidence_added' ? t('report.done.evidence', 'Your information was added to the existing report')
       : t('report.done.title', 'Report submitted')
   return (
-    <Card>
-      <CardBody className="space-y-4 text-center sm:py-8">
-        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-success-100 text-success"><CheckCircle2 className="h-8 w-8" aria-hidden /></span>
-        <h2 className="font-display text-xl font-extrabold">{title}</h2>
-        {ticket && (
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted">{t('report.done.ticket', 'Ticket number')}</p>
-            <p className="font-mono text-2xl font-bold text-forest">{ticket}</p>
-          </div>
-        )}
-        {action === 'created' && (
-          <div className="mx-auto flex max-w-md flex-col items-center gap-2 text-sm">
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <SeverityBadge severity={sev} />
-              {c.status && <StatusBadge status={c.status} />}
-            </div>
-            {reason && <p className="text-ink/90">{reason}</p>}
-            {dept && <p className="text-muted">{t('report.prev.dept', 'Likely department')}: <span className="font-medium text-ink">{dept}</span></p>}
-            <p className="text-xs text-muted">{t('report.done.note', 'An officer will review it and can correct the AI suggestion. You will be notified when its status changes.')}</p>
-          </div>
-        )}
-        <div className="flex flex-col justify-center gap-2 sm:flex-row">
-          {ticket && <Button as={Link} to={`/app/complaints/${ticket}`} size="lg">{t('report.done.view', 'View my report')}</Button>}
-          <Button variant="secondary" size="lg" onClick={onAnother}>{t('report.done.another', 'Report another')}</Button>
+    <section className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto rounded-[14px] border border-line bg-surface px-4 py-6 text-center shadow-[0_1px_2px_rgba(36,76,57,0.05)]">
+      <IconTile icon={CheckCircle2} tone="success" size="lg" />
+      <h2 className="mt-3 font-display text-xl font-extrabold text-ink">{title}</h2>
+      {ticket && (
+        <div className="mt-3 rounded-[10px] border border-forest/20 bg-forest-50 px-5 py-2">
+          <p className={LABEL}>{t('report.done.ticket', 'Ticket number')}</p>
+          <p className="font-mono text-2xl font-bold text-forest">{ticket}</p>
         </div>
-      </CardBody>
-    </Card>
+      )}
+      {action === 'created' && (
+        <div className="mx-auto mt-3 flex max-w-md flex-col items-center gap-2 text-sm">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <SeverityBadge severity={sev} />
+            {c.status && <StatusBadge status={c.status} />}
+          </div>
+          {reason && <p className="line-clamp-3 text-ink/90">{reason}</p>}
+          {dept && <p className="text-muted">{t('report.prev.dept', 'Likely department')}: <span className="font-medium text-ink">{dept}</span></p>}
+          <p className="text-xs text-muted">{t('report.done.note', 'An officer will review it and can correct the AI suggestion. You will be notified when its status changes.')}</p>
+        </div>
+      )}
+      <div className="mt-4 flex flex-col justify-center gap-2 sm:flex-row">
+        {ticket && <Button as={Link} to={`/app/complaints/${ticket}`}>{t('report.done.view', 'View my report')}</Button>}
+        <Button variant="secondary" onClick={onAnother}>{t('report.done.another', 'Report another')}</Button>
+      </div>
+    </section>
   )
 }
