@@ -142,6 +142,17 @@ async def demo_stop(user: CurrentUser = Depends(require_admin)):
     return {**_status(), "stopped": stopped}
 
 
+@demo_router.post("/snap-routes")
+async def demo_snap_routes(user: CurrentUser = Depends(require_admin)):
+    """Snap the simulated routes to REAL roads now (OSRM / OpenStreetMap). Also runs automatically at startup. Idempotent."""
+    from fastapi.concurrency import run_in_threadpool
+
+    from app.services import route_snapping
+
+    result = await run_in_threadpool(route_snapping.snap_routes)
+    return {**_label, **result}
+
+
 @demo_router.get("/status")
 async def demo_status(user: CurrentUser = Depends(require_admin)):
     return _status()

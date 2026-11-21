@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -13,6 +14,23 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 log = logging.getLogger("civiclens")
 
 
+async def _snap_routes_background() -> None:
+    """Snap routes to real roads; if the routing service was unreachable, retry a few times with growing pauses."""
+    try:
+        from app.services import route_snapping
+
+        for attempt in range(6):
+            res = await asyncio.to_thread(route_snapping.snap_routes)
+            log.info("route snapping (attempt %d): %s", attempt + 1, res)
+            if not res["failed"]:
+                return
+            await asyncio.sleep(60 * (attempt + 1))
+    except asyncio.CancelledError:
+        raise
+    except Exception:
+        log.exception("route snapping failed")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Path(settings.UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
@@ -21,6 +39,9 @@ async def lifespan(app: FastAPI):
     from app.seed import run_all
 
     run_all()
+    snap_task = None
+    if settings.ROUTE_SNAPPING:   # runs in the background so startup / health checks are never delayed by the routing service
+        snap_task = asyncio.create_task(_snap_routes_background())
     simulator = None
     try:  # CleanRoute simulator is optional (owned by the CleanRoute module)
         from app.services import garbage_service
@@ -31,6 +52,8 @@ async def lifespan(app: FastAPI):
     except ImportError:
         log.info("garbage_service not installed; CleanRoute simulator disabled")
     yield
+    if snap_task is not None and not snap_task.done():
+        snap_task.cancel()
     if simulator is not None:
         await simulator.stop_simulator()
 

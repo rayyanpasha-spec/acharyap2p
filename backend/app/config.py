@@ -83,6 +83,11 @@ class Settings(BaseSettings):
     GARBAGE_TRACKER_MODE: str = "simulation"
     GARBAGE_SIMULATION_INTERVAL_SECONDS: float = 3.0
     GARBAGE_SIMULATION_AUTOSTART: bool = True
+    # Snap the simulated routes to real roads at startup using a routing engine (OSRM / OpenStreetMap data).
+    ROUTE_SNAPPING: bool = True
+    # Comma separated, tried in order. Public demo servers: light use only; self-host OSRM for heavy use.
+    OSRM_BASE_URL: str = "https://router.project-osrm.org,https://routing.openstreetmap.de/routed-car"
+    OSRM_TIMEOUT_SECONDS: float = 20.0
 
     CERTIFICATE_STORAGE_DIR: str = "./generated_certificates"
     PUBLIC_BASE_URL: str = "http://localhost:5173"  # frontend URL, used inside certificate QR codes

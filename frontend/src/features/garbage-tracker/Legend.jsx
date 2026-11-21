@@ -1,7 +1,8 @@
 import { Card } from '../../components/ui'
 import { BIN_STATES, BIN_STATE_ORDER } from './shared'
 
-export default function Legend({ compact = false }) {
+export default function Legend({ compact = false, roadSnapped = true }) {
+  const routeLabel = roadSnapped ? 'Truck route (follows real roads)' : 'Demo route (straight line: road routing unavailable)'
   if (compact) {
     return (
       <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-ink" aria-label="Legend">
@@ -12,8 +13,8 @@ export default function Legend({ compact = false }) {
           Vehicle (simulated)
         </li>
         <li className="flex items-center gap-1.5">
-          <svg width="22" height="6" aria-hidden><line x1="0" y1="3" x2="22" y2="3" stroke="#2f5f8f" strokeWidth="3" strokeDasharray="5 4" /></svg>
-          Demo route (not road-snapped)
+          <svg width="22" height="6" aria-hidden><line x1="0" y1="3" x2="22" y2="3" stroke="#2f5f8f" strokeWidth="3" strokeDasharray={roadSnapped ? undefined : '5 4'} /></svg>
+          {routeLabel}
         </li>
         {BIN_STATE_ORDER.map((s) => (
           <li key={s} className="flex items-center gap-1.5">
@@ -35,8 +36,8 @@ export default function Legend({ compact = false }) {
           Vehicle (simulated)
         </li>
         <li className="flex items-center gap-2">
-          <svg width="28" height="6" aria-hidden><line x1="0" y1="3" x2="28" y2="3" stroke="#2f5f8f" strokeWidth="3" strokeDasharray="6 5" /></svg>
-          Demo route (straight line, not road-snapped)
+          <svg width="28" height="6" aria-hidden><line x1="0" y1="3" x2="28" y2="3" stroke="#2f5f8f" strokeWidth="3" strokeDasharray={roadSnapped ? undefined : '6 5'} /></svg>
+          {routeLabel}
         </li>
         {BIN_STATE_ORDER.map((s) => (
           <li key={s} className="flex items-center gap-2">

@@ -61,7 +61,13 @@ export default function VoiceRecorder({ language, maxSeconds = 90, onUse, onType
       if (!mountedRef.current) return
       const text = data?.text || ''
       setTranscript(text); setOriginal(text); setTranscriptId(data?.transcript_id ?? null)
-      setPhase('review')
+      if (text.trim()) {
+        // Proceed automatically: the words go straight into the (editable) description so the citizen can continue.
+        onUse?.({ text: text.trim(), transcriptId: data?.transcript_id ?? null, language })
+        setPhase('used')
+      } else {
+        setPhase('review')
+      }
     } catch (e) {
       if (!mountedRef.current) return
       const status = e?.response?.status
@@ -69,7 +75,7 @@ export default function VoiceRecorder({ language, maxSeconds = 90, onUse, onType
       setError({ kind, message: errMsg(e, t('report.voice.failed', 'We could not turn the recording into text.')) })
       setPhase('error')
     }
-  }, [language, t])
+  }, [language, t, onUse])
 
   const resetAudio = () => { setAudioUrl(null); fileRef.current = null; setTranscript(''); setOriginal(''); setTranscriptId(null); setElapsed(0) }
 
@@ -222,7 +228,7 @@ export default function VoiceRecorder({ language, maxSeconds = 90, onUse, onType
 
       {phase === 'used' && (
         <div className="w-full space-y-2 rounded-[10px] border border-success/30 bg-success-100 p-3">
-          <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-success"><Check className="h-4 w-4" aria-hidden /> {t('report.voice.used', 'Your words were added to the description.')}</p>
+          <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-success"><Check className="h-4 w-4" aria-hidden /> {t('report.voice.used', 'Your words were added to the description. Check them, edit if needed, then press Next.')}</p>
           <div className="flex flex-wrap justify-center gap-2">
             <Button size="sm" variant="secondary" onClick={start}><RotateCcw className="h-4 w-4" aria-hidden /> {t('report.voice.rerecord', 'Record again')}</Button>
             <Button size="sm" variant="ghost" onClick={discard}><Trash2 className="h-4 w-4" aria-hidden /> {t('report.voice.discard', 'Discard')}</Button>

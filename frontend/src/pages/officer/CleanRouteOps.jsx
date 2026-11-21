@@ -118,7 +118,7 @@ const TABS = [
 const n0 = (v) => (v == null ? 0 : v)
 
 /** One-line legend for the map footer (built from the shared bin-state table). */
-function MiniLegend() {
+function MiniLegend({ roadSnapped = true }) {
   return (
     <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-ink" aria-label="Map legend">
       <li className="flex items-center gap-1.5">
@@ -126,8 +126,8 @@ function MiniLegend() {
         Vehicle (simulated)
       </li>
       <li className="flex items-center gap-1.5">
-        <svg width="24" height="6" aria-hidden><line x1="0" y1="3" x2="24" y2="3" stroke="#2f5f8f" strokeWidth="3" strokeDasharray="5 4" /></svg>
-        Demo route (not road-snapped)
+        <svg width="24" height="6" aria-hidden><line x1="0" y1="3" x2="24" y2="3" stroke="#2f5f8f" strokeWidth="3" strokeDasharray={roadSnapped ? undefined : '5 4'} /></svg>
+        {roadSnapped ? 'Truck route (follows real roads)' : 'Demo route (straight line: road routing unavailable)'}
       </li>
       {BIN_STATE_ORDER.map((st) => (
         <li key={st} className="flex items-center gap-1.5">
@@ -209,7 +209,7 @@ export default function CleanRouteOps() {
             </div>
 
             <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(320px,370px)] lg:grid-rows-[minmax(0,1fr)]">
-              <Panel title="Live map" subtitle="Vehicles, demo routes and bins" icon={MapIcon} tone="forest" scroll={false} bodyClassName="flex flex-col p-0" footer={<MiniLegend />}>
+              <Panel title="Live map" subtitle="Simulated vehicles, routes and bins" icon={MapIcon} tone="forest" scroll={false} bodyClassName="flex flex-col p-0" footer={<MiniLegend roadSnapped={live.routes.length > 0 && live.routes.every((r) => r.road_snapped)} />}>
                 <div className="relative h-[55vh] min-h-[320px] lg:h-auto lg:min-h-0 lg:flex-1">
                   <div className="absolute inset-0">
                     <GarbageMap vehicles={live.vehicleList} bins={live.binList} routes={live.routes} selectedVehicleId={selV} selectedBinId={selB}

@@ -1,11 +1,47 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Mail, Save, ShieldCheck, UserRound, CalendarDays } from 'lucide-react'
+import { LogOut, Mail, Save, ShieldCheck, UserRound, CalendarDays, KeyRound } from 'lucide-react'
+import GoogleSignInButton from '../../components/GoogleSignInButton'
 import { Button, Field, IconTile, Input, Page, Panel, Select, toast } from '../../components/ui'
 import { api, errMsg } from '../../lib/api'
 import { useAuth } from '../../store/auth'
 import { LANGS, useT } from '../../lib/i18n'
 import { fmtDate, titleCase } from '../../lib/format'
+
+function PasswordPanel({ t }) {
+  const [cur, setCur] = useState('')
+  const [next, setNext] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  const post = async (extra) => {
+    setErr('')
+    if (next.length < 8) { setErr(t('profile.pwShort', 'The new password must be at least 8 characters.')); return }
+    setBusy(true)
+    try {
+      await api.post('/users/me/password', { new_password: next, ...extra })
+      toast.success(t('profile.pwSaved', 'Password saved. You can now sign in with your email and password.'))
+      setCur(''); setNext('')
+    } catch (e) { setErr(errMsg(e)) }
+    setBusy(false)
+  }
+  return (
+    <Panel title={t('profile.pwTitle', 'Password')} icon={KeyRound} tone="saffron" className="shrink-0" bodyClassName="space-y-3 p-4">
+      <p className="text-[13px] text-muted">{t('profile.pwHelp', 'Signed up with Google? Choose a new password and confirm with Google, so you can also sign in with email and password.')}</p>
+      {err && <div role="alert" className="rounded-[10px] border border-critical/30 bg-critical-100 px-3 py-2 text-sm font-medium text-critical">{err}</div>}
+      <Field label={t('profile.pwNew', 'New password')} htmlFor="pf-newpw" hint={t('profile.pwHint', 'At least 8 characters.')}>
+        <Input id="pf-newpw" type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} />
+      </Field>
+      <Field label={t('profile.pwCurrent', 'Current password (if you have one)')} htmlFor="pf-curpw">
+        <Input id="pf-curpw" type="password" autoComplete="current-password" value={cur} onChange={(e) => setCur(e.target.value)} />
+      </Field>
+      <Button type="button" size="sm" loading={busy} disabled={!cur} onClick={() => post({ current_password: cur })}>{t('profile.pwSave', 'Save password')}</Button>
+      <div className="border-t border-line pt-3">
+        <p className="mb-2 text-[13px] font-semibold text-ink">{t('profile.pwGoogle', 'No current password? Confirm it is you with Google:')}</p>
+        <GoogleSignInButton mode="signin" note={false} onCredential={(credential) => post({ google_credential: credential })} />
+      </div>
+    </Panel>
+  )
+}
 
 export default function Profile() {
   const { t, setLang } = useT()
@@ -65,6 +101,13 @@ export default function Profile() {
               </Field>
             </div>
           </form>
+          <div className="mt-5 flex items-start gap-3 rounded-[12px] border border-line bg-paper p-4">
+            <IconTile icon={ShieldCheck} tone="teal" />
+            <div>
+              <p className="font-display text-sm font-bold">{t('profile.privacyTitle', 'Your privacy')}</p>
+              <p className="mt-1 text-sm text-ink/85">{t('profile.privacy', 'Other citizens never see your name, email, phone or exact location. Officers see your name on your own reports to follow up. Public certificates show only your first name and last initial.')}</p>
+            </div>
+          </div>
         </Panel>
 
         <div className="flex min-h-0 flex-col gap-3">
@@ -76,12 +119,7 @@ export default function Profile() {
               <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted"><CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden />{titleCase(user?.role || 'citizen')}{user?.created_at ? ` · ${fmtDate(user.created_at)}` : ''}</p>
             </div>
           </Panel>
-          <Panel title={t('profile.privacyTitle', 'Your privacy')} icon={ShieldCheck} tone="teal" className="lg:flex-1">
-            <div className="flex items-start gap-3">
-              <IconTile icon={ShieldCheck} tone="teal" />
-              <p className="text-sm text-ink/85">{t('profile.privacy', 'Other citizens never see your name, email, phone or exact location. Officers see your name on your own reports to follow up. Public certificates show only your first name and last initial.')}</p>
-            </div>
-          </Panel>
+          <PasswordPanel t={t} />
         </div>
       </div>
     </Page>

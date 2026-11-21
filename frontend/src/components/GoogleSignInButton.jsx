@@ -68,7 +68,7 @@ function OrDivider({ label }) {
  * mode: 'signin' | 'signup' (button wording).  redirectTo: where to go afterwards (default: the user's home).
  * divider: also render the "or" separator below the block (only when Google is actually available, so no orphan divider).
  */
-export default function GoogleSignInButton({ mode = 'signin', redirectTo, divider = false, className = '' }) {
+export default function GoogleSignInButton({ mode = 'signin', redirectTo, divider = false, className = '', onCredential, note }) {
   const { t, lang } = useT()
   const navigate = useNavigate()
   const googleSignIn = useAuth((s) => s.googleSignIn)
@@ -85,6 +85,11 @@ export default function GoogleSignInButton({ mode = 'signin', redirectTo, divide
     if (!credential) return
     setError('')
     setBusy(true)
+    if (onCredential) {            // custom use (e.g. confirm identity before setting a password): do not sign in
+      try { await onCredential(credential) } catch (e) { setError(errMsg(e)) }
+      setBusy(false)
+      return
+    }
     try {
       const { is_new } = await googleSignIn(credential, lang)
       if (is_new) toast.success(t('pub.welcome', 'Welcome to CivicLens'))
@@ -170,9 +175,11 @@ export default function GoogleSignInButton({ mode = 'signin', redirectTo, divide
         )}
       </div>
       {error && <p role="alert" className="mt-2 rounded-[10px] border border-critical/30 bg-critical-100 px-3 py-2 text-xs font-medium text-critical">{error}</p>}
-      <p className="mt-2 text-center text-xs text-muted">
-        {t('pub.googleNote', 'Google sign-in creates a citizen account. Staff accounts are issued by an administrator.')}
-      </p>
+      {note !== false && (
+        <p className="mt-2 text-center text-xs text-muted">
+          {note ?? t('pub.googleNote', 'Google sign-in creates a citizen account. Staff accounts are issued by an administrator.')}
+        </p>
+      )}
       {divider && <div className="mt-3"><OrDivider label={t('pub.or', 'or')} /></div>}
     </div>
   )

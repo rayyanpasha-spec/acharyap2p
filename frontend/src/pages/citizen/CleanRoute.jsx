@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { CalendarClock, MapPinned } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { CalendarClock, MapPinned, Box } from 'lucide-react'
 import { ErrorState, Page, Panel, Spinner, Tabs } from '../../components/ui'
 import { useGarbageLive } from '../../features/garbage-tracker/useGarbageLive'
 import GarbageMap from '../../features/garbage-tracker/GarbageMap'
@@ -19,6 +20,7 @@ export default function CleanRoute() {
   const vehicle = selV != null ? live.vehicles[selV] : null
   const route = useMemo(() => (vehicle ? live.routes.find((r) => r.id === vehicle.route?.id) : null), [vehicle, live.routes])
   const hasData = live.vehicleList.length > 0 || live.binList.length > 0
+  const roadSnapped = live.routes.length > 0 && live.routes.every((r) => r.road_snapped)
 
   const pickVehicle = (v) => { setSelV(v.id); if (Number.isFinite(Number(v.latitude))) setFocus({ lat: Number(v.latitude), lng: Number(v.longitude), k: Math.random() }) }
   const pickBin = (b) => { setSelB(b.id); if (Number.isFinite(Number(b.latitude))) setFocus({ lat: Number(b.latitude), lng: Number(b.longitude), k: Math.random() }) }
@@ -26,9 +28,9 @@ export default function CleanRoute() {
   return (
     <Page
       title="CleanRoute"
-      actions={<LiveStatusBar compact conn={live.conn} polling={live.polling} lastUpdated={live.lastUpdated} stale={live.stale} sourceLabel={live.sourceLabel} error={hasData ? null : live.error} onRetry={live.refresh} />}
+      actions={<><Link to="/city-in-motion?view=cleanroute" className="inline-flex h-8 items-center gap-1.5 rounded-[8px] border border-forest/30 bg-forest px-3 text-[13px] font-semibold text-white hover:bg-forest-600"><Box className="h-3.5 w-3.5" aria-hidden />Open in 3D</Link><LiveStatusBar compact conn={live.conn} polling={live.polling} lastUpdated={live.lastUpdated} stale={live.stale} sourceLabel={live.sourceLabel} error={hasData ? null : live.error} onRetry={live.refresh} /></>}
     >
-      <DemoBanner compact />
+      <DemoBanner compact roadSnapped={roadSnapped} />
 
       {live.loading && !hasData ? (
         <Panel className="flex-1"><Spinner label="Loading CleanRoute demo data..." /></Panel>
@@ -38,7 +40,7 @@ export default function CleanRoute() {
         <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_350px] lg:grid-rows-[minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_380px]">
           {/* map fills the available height */}
           <Panel title="Live map" subtitle="Simulated vehicles, demo routes and bin status" icon={MapPinned} tone="civic" scroll={false} bodyClassName="flex flex-col p-0"
-            footer={<Legend compact />}>
+            footer={<Legend compact roadSnapped={roadSnapped} />}>
             <div className="relative h-[55vh] min-h-[320px] lg:min-h-0 lg:flex-1">
               <GarbageMap
                 fill

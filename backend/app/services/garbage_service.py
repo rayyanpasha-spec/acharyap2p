@@ -73,8 +73,16 @@ def bearing_deg(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     return (math.degrees(math.atan2(y, x)) + 360.0) % 360.0
 
 
+MIN_SNAPPED_POINTS = 40   # a route with at least this many points came from road routing (seed routes have ~8)
+
+
+def is_snapped(waypoints) -> bool:
+    return len(waypoints or []) >= MIN_SNAPPED_POINTS
+
+
 class RouteGeometry:
-    """A polyline (list of [lat, lng]) with cumulative distances. Straight segments, NOT road-snapped."""
+    """A polyline (list of [lat, lng]) with cumulative distances. Straight segments between points; the points
+    follow real roads once the route has been snapped (see route_snapping)."""
 
     def __init__(self, waypoints: list):
         self.points: list[tuple[float, float]] = [(float(p[0]), float(p[1])) for p in waypoints]
@@ -274,7 +282,9 @@ def routes_payload(db: Session) -> list[dict]:
             "schedule_window": r.schedule_window, "ward_label": r.ward_label,
             "vehicle_codes": [v.code for v in vehicles if v.route_id == r.id],
             "simulated": True, "source_label": SOURCE_LABEL,
-            "path_note": "Straight lines between demo waypoints; not road-snapped.",
+            "road_snapped": is_snapped(r.waypoints),
+            "path_note": ("Follows real roads (OpenStreetMap routing); vehicle positions are simulated."
+                          if is_snapped(r.waypoints) else "Straight lines between demo waypoints; road routing unavailable."),
         })
     return out
 

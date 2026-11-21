@@ -113,7 +113,7 @@ export default function GarbageMap({ vehicles = [], bins = [], routes = [], sele
   const meta = useMeta((s) => s.meta)
   const center = meta?.map?.center?.length === 2 ? meta.map.center : DEFAULT_CENTER
   const zoom = DEFAULT_ZOOM
-  const lines = useMemo(() => routes.map((r) => ({ id: r.id, name: r.name, pts: (r.waypoints || []).filter((p) => Array.isArray(p) && Number.isFinite(Number(p[0])) && Number.isFinite(Number(p[1]))) })).filter((r) => r.pts.length > 1), [routes])
+  const lines = useMemo(() => routes.map((r) => ({ id: r.id, name: r.name, snapped: !!r.road_snapped, pts: (r.waypoints || []).filter((p) => Array.isArray(p) && Number.isFinite(Number(p[0])) && Number.isFinite(Number(p[1]))) })).filter((r) => r.pts.length > 1), [routes])
 
   return (
     <div className={fill ? `absolute inset-0 overflow-hidden ${className}` : `relative h-[60vh] min-h-[360px] overflow-hidden rounded-[10px] border border-line ${className}`}>
@@ -124,8 +124,8 @@ export default function GarbageMap({ vehicles = [], bins = [], routes = [], sele
         <Focus focus={focus} />
         <FitButton routes={routes} />
         {lines.map((r) => (
-          <Polyline key={r.id} positions={r.pts.map((p) => [Number(p[0]), Number(p[1])])} pathOptions={{ color: '#2f5f8f', weight: 3, dashArray: '8 8', opacity: 0.85 }}>
-            <Popup><p className="text-[13px] font-semibold">{r.name}</p><p className="text-xs text-muted">Straight demo line, not road-snapped.</p></Popup>
+          <Polyline key={r.id} positions={r.pts.map((p) => [Number(p[0]), Number(p[1])])} pathOptions={r.snapped ? { color: '#2f5f8f', weight: 4, opacity: 0.9 } : { color: '#2f5f8f', weight: 3, dashArray: '8 8', opacity: 0.85 }}>
+            <Popup><p className="text-[13px] font-semibold">{r.name}</p><p className="text-xs text-muted">{r.snapped ? 'Follows real roads (OpenStreetMap routing).' : 'Straight demo line: road routing was unavailable.'}</p></Popup>
           </Polyline>
         ))}
         {bins.filter(validPos).map((b) => (

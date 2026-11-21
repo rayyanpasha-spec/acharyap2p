@@ -17,6 +17,7 @@ os.environ.update({
     "SEED_DEMO_DATA": "false",
     "SEED_REFERENCE_DATA": "true",
     "GARBAGE_SIMULATION_AUTOSTART": "false",
+    "ROUTE_SNAPPING": "false",
     "UPLOAD_DIR": str(_TMP / "uploads"),
     "CERTIFICATE_STORAGE_DIR": str(_TMP / "certs"),
     "BOUNDARY_DATA_DIR": str(_TMP / "no_boundaries"),

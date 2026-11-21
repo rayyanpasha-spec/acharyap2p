@@ -40,6 +40,7 @@ export function initState(language, prefill) {
     starter: text,            // last auto-generated starter; replaced only while the citizen has not edited it
     via: 'text',
     voiceTranscriptId: null,
+    voiceOriginal: '',
     images: [],               // [{id, file, url}]
     loc: hasPin ? { lat: prefill.lat, lng: prefill.lng, source: 'map_pin', accuracy: null, capturedAt: new Date().toISOString(), confirmed: false, prefilled: true } : null,
     focus: hasPin ? { lat: prefill.lat, lng: prefill.lng, n: Date.now() } : null,

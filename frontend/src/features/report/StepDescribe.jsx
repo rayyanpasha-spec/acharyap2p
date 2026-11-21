@@ -27,7 +27,7 @@ export default function StepDescribe({ s, set, meta, prefill, title }) {
   const onUse = ({ text, transcriptId }) => {
     set((cur) => {
       const has = cur.text.trim() && cur.text !== cur.starter
-      return { text: has ? `${cur.text.trim()}\n${text}` : text, via: 'voice', voiceTranscriptId: transcriptId }
+      return { text: has ? `${cur.text.trim()}\n${text}` : text, via: 'voice', voiceTranscriptId: transcriptId, voiceOriginal: text }
     })
   }
 

@@ -59,7 +59,13 @@ export function createForm(s) {
   return fd
 }
 
-export const createComplaint = (s) => api.post('/complaints', createForm(s), LONG).then((r) => r.data)
+export const createComplaint = async (s) => {
+  // If the citizen edited the transcribed words, keep the corrected text against the transcript record (best effort).
+  if (s.via === 'voice' && s.voiceTranscriptId && s.text.trim() !== (s.voiceOriginal || '').trim()) {
+    try { await confirmTranscript(s.voiceTranscriptId, s.text.trim()) } catch { /* the submitted text is still what is used */ }
+  }
+  return api.post('/complaints', createForm(s), LONG).then((r) => r.data)
+}
 export const previewComplaint = (s) => api.post('/complaints/preview', previewForm(s), LONG).then((r) => r.data)
 
 export function duplicateCheck(s, hint = {}) {

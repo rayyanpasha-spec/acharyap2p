@@ -7,6 +7,14 @@ from jose import JWTError, jwt
 from app.config import settings
 
 
+# Stored instead of a hash for accounts created through Google sign-in: it can never match a typed password (bcrypt rejects it).
+NO_PASSWORD_HASH = "!google-no-password"
+
+
+def has_password(hashed: str) -> bool:
+    return bool(hashed) and not hashed.startswith("!")
+
+
 def hash_password(password: str) -> str:
     # bcrypt only uses the first 72 bytes; truncate explicitly so long passwords never raise.
     return bcrypt.hashpw(password.encode("utf-8")[:72], bcrypt.gensalt()).decode("utf-8")
